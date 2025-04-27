@@ -1,62 +1,76 @@
-import scala.util.matching.Regex
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.rdd.RDD
 import org.example.DateTimeParser
 import org.example.DateTimeParts
 
-val pattern: Regex =
-  """^QS\s+([^\s]+)\s+\{[^}]+\}\s+(\d+)\s+((?:\w+_\d+\s*)+)""".r
+object ConsultantPlusAnalysis {
+  case class QSRecord(id: String, date: DateTimeParts, codes: List[String])
 
-def parseLine(line: String): Option[(DateTimeParts, String, List[String])] = {
-  if (!line.startsWith("QS ")) {
-    println(s"Не начинается с QS: ${line.take(50)}...")
-    return None
+  def main(args: Array[String]): Unit = {
+    // Настраиваем Spark с выводом INFO в консоль
+    val spark = SparkSession.builder()
+      .appName("ConsultantPlusAnalysis")
+      .master("local[*]")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.showConsoleProgress", "true")
+      .getOrCreate()
+
+    // Устанавливаем уровень логирования
+    spark.sparkContext.setLogLevel("INFO")
+
+    try {
+      val sc = spark.sparkContext
+
+      println("=== Загрузка данных ===")
+      val inputRDD = sc.textFile("src/main/resources/data/0")
+      println(s"Загружено строк: ${inputRDD.count()}")
+
+      println("\n=== Поиск QS запросов ===")
+      val qsIndices = inputRDD.zipWithIndex()
+        .filter { case (line, _) => line.startsWith("QS") }
+        .map { case (_, idx) => idx }
+        .collect()
+        .toSet
+      println(s"Найдено QS запросов: ${qsIndices.size}")
+
+      val qsLinesWithNext = inputRDD.zipWithIndex()
+        .filter { case (_, idx) => qsIndices.contains(idx) || qsIndices.contains(idx - 1) }
+        .map { case (line, _) => line }
+
+      println("\n=== Парсинг результатов ===")
+      val parsedResults = parseQSRecords(qsLinesWithNext)
+      showSampleResults(parsedResults)
+
+    } finally {
+      spark.stop()
+    }
   }
 
-  val afterQS = line.drop(3).trim
-  val firstBrace = afterQS.indexOf('{')
-  val lastBrace = afterQS.indexOf('}')
+  private object QSParser extends Serializable {
+    private val pattern = """^QS\s+([^\s]+)\s+\{[^}]+\}\s+(\d+)\s+((?:\w+_\d+\s*)+)""".r
 
-  if (firstBrace < 0 || lastBrace < 0 || lastBrace <= firstBrace) {
-    println(s"Не найдены скобки запроса: ${line.take(50)}...")
-    return None
+    def parse(line: String): Option[QSRecord] = line match {
+      case pattern(dateStr, id, codesStr) =>
+        DateTimeParser.parse(dateStr) match {
+          case Some(dtParts) =>
+            Some(QSRecord(id, dtParts, codesStr.trim.split("\\s+").toList))
+          case None =>
+            println(s"Неизвестный формат даты: ${dateStr.take(50)}")
+            None
+        }
+      case _ => None
+    }
   }
 
-  val dateStr = afterQS.substring(0, firstBrace).trim
-  val query = afterQS.substring(firstBrace + 1, lastBrace).trim
-  val afterQuery = afterQS.substring(lastBrace + 1).trim
-
-  val parts = afterQuery.split("\\s+")
-  if (parts.length < 2) {
-    println(s"Недостаточно данных после запроса: ${line.take(50)}...")
-    return None
+  private def parseQSRecords(rdd: RDD[String]): RDD[QSRecord] = {
+    rdd.flatMap(QSParser.parse)
   }
 
-  val id = parts(0)
-  val codes = parts.drop(1).toList
-
-  DateTimeParser.parse(dateStr) match {
-    case Some(dtParts) =>
-      Some((dtParts, id, codes))
-    case None =>
-      println(s"Неизвестный формат даты: ${dateStr.take(50)}...")
-      None
-  }
-}
-
-
-val testDates = Seq(
-  "01.07.2020_13:42:01",                           // dd.MM.yyyy_HH:mm:ss
-  "Wed,_01_Aug_2020_13:48:07_+0300",                // EEE,_dd_MMM_yyyy_HH:mm:ss_ZZZZZ
-  "2020-07-01T13:48:07+03:00",                      // ISO_OFFSET_DATE_TIME
-  "2020-07-01 13:48:07",                            // yyyy-MM-dd HH:mm:ss
-  "07/01/2020 01:48:07 PM"                          // MM/dd/yyyy hh:mm:ss a
-)
-
-testDates.foreach { dateStr =>
-  println(s"Пробуем распарсить: $dateStr")
-  DateTimeParser.parse(dateStr) match {
-    case Some(parts) =>
-      println(s"  ✅ Успех: дата = ${parts.date}, время = ${parts.time}")
-    case None =>
-      println(s"  ❌ Не удалось распарсить")
+  private def showSampleResults(results: RDD[QSRecord]): Unit = {
+    println("\n=== Примеры записей ===")
+    results.take(5).foreach { record =>
+      println(s"ID: ${record.id}, Дата: ${record.date}, Результаты: ${record.codes.mkString(", ")}")
+    }
+    println(s"\nВсего распознано записей: ${results.count()}")
   }
 }

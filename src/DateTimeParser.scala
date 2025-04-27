@@ -6,7 +6,7 @@ import scala.util.Try
 
 case class DateTimeParts(date: String, time: String)
 
-object DateTimeParser {
+object DateTimeParser extends Serializable {
   private val knownDateFormats: List[DateTimeFormatter] = List(
     DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US),  // 01_Aug_2020_13:48:07
     DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),              // 01.07.2020_13:42:01
