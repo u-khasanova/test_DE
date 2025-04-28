@@ -15,7 +15,7 @@ object ConsultantPlusAnalysis {
       val timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())
 
       // 1.0 upload data
-      val inputRDD = sc.textFile("src/main/resources/data/???").cache()
+      val inputRDD = sc.textFile("src/main/resources/data/*").cache()
       println(s"Total lines loaded: ${inputRDD.count()}")
 
       // the code below doesn't work properly
