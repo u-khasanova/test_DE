@@ -7,26 +7,27 @@ import scala.util.matching.Regex
 object QSEventParser {
   case class ParsedQSRecord(id: String, date: DateTimeParts, codes: List[String])
 
+  // Изменения в паттерне (делаем codes опциональным):
   private val qsPattern: Regex =
-    """^QS\s+([^\s]+)\s+\{[^}]+\}\s+(\d+)\s+((?:\w+_\d+\s*)+)""".r
+    """^QS\s+([^\s]+)\s+\{[^}]+\}\s+([\w-]*\d+)\s+((?:\w+_\d+\s*)*)""".r  // * вместо + в конце
 
   def parseQSLine(line: String): Option[ParsedQSRecord] = {
     line match {
       case qsPattern(dateStr, id, codesStr) =>
-        DateTimeParser.parse(dateStr) match {
-          case Some(dtParts) =>
-            Some(ParsedQSRecord(id, dtParts, codesStr.trim.split("\\s+").toList))
-          case None =>
-            System.err.println(s"Failed to parse date in: ${line.take(100)}")
-            None
+        DateTimeParser.parse(dateStr).map { dtParts =>
+          ParsedQSRecord(
+            id,
+            dtParts,
+            // Обрабатываем пустые коды:
+            if (codesStr.trim.isEmpty) Nil else codesStr.trim.split("\\s+").toList
+          )
         }
-      case _ =>
-        System.err.println(s"Line doesn't match QS pattern: ${line.take(100)}")
-        None
+      case _ => None
     }
   }
 
+  // parseQSRecords остается без изменений
   def parseQSRecords(rdd: RDD[String]): RDD[ParsedQSRecord] = {
-    rdd.flatMap(parseQSLine)
+    rdd.mapPartitions(_.flatMap(parseQSLine))
   }
 }

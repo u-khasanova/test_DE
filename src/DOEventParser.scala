@@ -6,27 +6,39 @@ import scala.util.matching.Regex
 
 object DOEventParser {
   case class ParsedDORecord(id: String, date: DateTimeParts, code: String)
+  case class ParseError(rawLine: String, error: String)
 
   private val doPattern: Regex =
-    """^DOC_OPEN\s+([^\s]+)\s+(\d+)\s+(\w+_\d+)\s*$""".r
+    """^DOC_OPEN\s+([^\s]*)\s+([\w-]*\d+)\s+(\w+_\d+)\s*$""".r
 
-  def parseDOLine(line: String): Option[ParsedDORecord] = {
+  def parseDOLine(line: String): Either[ParseError, ParsedDORecord] = {
     line match {
       case doPattern(dateStr, id, codeStr) =>
-        DateTimeParser.parse(dateStr) match {
-          case Some(dtParts) =>
-            Some(ParsedDORecord(id, dtParts, codeStr))
-          case None =>
-            System.err.println(s"Failed to parse date in: ${line.take(100)}")
-            None
+        if (dateStr.isEmpty) {
+          Left(ParseError(line.take(100), "Empty date field"))
+        } else {
+          DateTimeParser.parse(dateStr) match {
+            case Some(dtParts) => Right(ParsedDORecord(id, dtParts, codeStr))
+            case None => Left(ParseError(line.take(100), s"Invalid date format: $dateStr"))
+          }
         }
-      case _ =>
-        System.err.println(s"Line doesn't match DOC_OPEN pattern: ${line.take(100)}")
-        None
+      case _ => Left(ParseError(line.take(100), "Pattern mismatch"))
     }
   }
 
-  def parseDORecords(rdd: RDD[String]): RDD[ParsedDORecord] = {
-    rdd.flatMap(parseDOLine)
+  def parseDORecords(rdd: RDD[String]): (RDD[ParsedDORecord], RDD[ParseError]) = {
+    val parsedResults = rdd.map(parseDOLine).cache()
+
+    val successRecords = parsedResults.flatMap {
+      case Right(record) => Some(record)
+      case _ => None
+    }
+
+    val errorLogs = parsedResults.flatMap {
+      case Left(error) => Some(error)
+      case _ => None
+    }
+
+    (successRecords, errorLogs)
   }
 }
