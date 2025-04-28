@@ -1,27 +1,31 @@
 package org.example
 import java.time.format.DateTimeFormatter
-import java.time.{LocalDateTime, ZonedDateTime}
+import java.time.LocalDateTime
 import java.util.Locale
 import scala.util.Try
 
 case class DateTimeParts(date: String, time: String)
 
 object DateTimeParser extends Serializable {
+  // can be extended
   private val knownDateFormats: List[DateTimeFormatter] = List(
     DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US),  // 01_Aug_2020_13:48:07
+    DateTimeFormatter.ofPattern("MMM_dd_yyyy_HH:mm:ss", Locale.US),  // Aug_01_2020_13:48:07
     DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),              // 01.07.2020_13:42:01
+    DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"),              // 01-07-2020 13:42:01
+    DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss"),              // 07-01-2020 13:42:01
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),              // 2020-07-01 13:48:07
+    DateTimeFormatter.ofPattern("yyyy-dd-MM HH:mm:ss"),              // 2020-01-07 00:00:00
     DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a", Locale.US)  // 07/01/2020 01:48:07 PM
   )
 
   def parse(dateStr: String): Option[DateTimeParts] = {
-    // Предварительная обработка строки (удаляем день недели и временную зону)
     val cleanedStr = dateStr match {
       case s if s.startsWith("Mon,_") || s.startsWith("Tue,_") ||
         s.startsWith("Wed,_") || s.startsWith("Thu,_") ||
         s.startsWith("Fri,_") || s.startsWith("Sat,_") ||
         s.startsWith("Sun,_") =>
-        s.substring(5).split("_\\+").head  // Удаляем "Wed,_" и "_+0300"
+        s.substring(5).split("_\\+").head
       case _ => dateStr
     }
 
@@ -43,9 +47,16 @@ object DateTimeParser extends Serializable {
 
 object DateTimeParserTest extends App {
   val testData = Seq(
+    "01_Aug_2020_13:48:07",
+    "Aug_01_2020_13:48:07",
+    "Wed,_01_Aug_2020_13:48:07_+0300",
     "01.07.2020_13:42:01",
-    "01.07.2020_13:48:07",
-    "Wed,_01_Aug_2020_13:48:07_+0300"
+    "01-07-2020 13:42:01",
+    "07-01-2020 13:42:01",
+    "2020-07-01 13:48:07",
+    "2020-01-07 00:00:00",
+    "07/01/2020 01:48:07 PM",
+    " " // add empty line parse option - logging to stderr???
   )
 
   testData.foreach { line =>
