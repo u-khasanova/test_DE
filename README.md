@@ -26,3 +26,14 @@ Apache Maven 3.9.0     // Сборка проекта
 ```
 
 ## 📊 Выходные данные
+
+```
+Total lines loaded: 175630
+Total successfully parsed QS events: 16111
+Total successfully parsed CS events: 4059
+Number of searches for document ACC_45616 by card: 444
+Total DOC_OPEN events: 102872
+Successfully parsed: 96306
+Failed to parse: 6566
+Total number of DOC_OPEN through QS: 77118
+```
