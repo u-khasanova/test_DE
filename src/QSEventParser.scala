@@ -15,7 +15,7 @@ object QSEventParser {
         DateTimeParser.parse(dateStr).map { dtParts =>
           val cleanedId = if (id.startsWith("-")) id.substring(1) else id
           ParsedQSRecord(
-            cleanedId,  // Используем очищенный ID без минуса
+            cleanedId,
             dtParts,
             if (codesStr.trim.isEmpty) Nil else codesStr.trim.split("\\s+").toList
           )
