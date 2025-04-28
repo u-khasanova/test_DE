@@ -1,15 +1,7 @@
 package org.example
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
-import org.example.QSEventExtractor
-import org.example.QSEventParser
-import org.example.CSEventParser
-import org.example.CSEventExtractor
-import org.example.DOEventParser
-import org.example.DOEventExtractor
-import org.example.SessionEventExtractor
-import org.example.SessionEventParser
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object ConsultantPlusAnalysis {
   def main(args: Array[String]): Unit = {
@@ -20,11 +12,13 @@ object ConsultantPlusAnalysis {
 
     try {
       val sc = spark.sparkContext
+      val timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())
 
       // 1.0 upload data
-      val inputRDD = sc.textFile("src/main/resources/data/*").cache()
+      val inputRDD = sc.textFile("src/main/resources/data/???").cache()
       println(s"Total lines loaded: ${inputRDD.count()}")
 
+      // the code below doesn't work properly
 //      // 1.1 extract SESSION_START & SESSION_END events
 //      val sessionEventsRDD = SessionEventExtractor.extractEvents(inputRDD).cache()
 //      println(s"Total successfully extracted SESSION events: ${sessionEventsRDD.count()}")
@@ -51,64 +45,97 @@ object ConsultantPlusAnalysis {
       val doEventsRDD = DOEventExtractor.extractEvents(inputRDD).cache()
 
       // 7. parse DOC_OPEN events
-      // Парсим события с разделением на валидные и ошибочные
       val (parsedDOEvents, parseErrors) = DOEventParser.parseDORecords(doEventsRDD)
-
-      // 2. Подсчет ACC_45616 (распределенный)
-      val acc45616SearchCount = parsedCSEvents
-        .filter(_.codes.contains("ACC_45616"))
-        .count()
-      println(s"Количество поисков документа АСС_45616 по карточке: ${acc45616SearchCount}")
-
-      // 1. Кэширование
-      // Кэшируем оба RDD
       val cachedValid = parsedDOEvents.cache()
       val cachedErrors = parseErrors.cache()
 
-      // Логируем статистику
+      // 8. Count ACC_45616 searches through CS
+      val acc45616SearchCount = parsedCSEvents
+        .filter(_.codes.contains("ACC_45616"))
+        .count()
+      println(s"Number of searches for document ACC_45616 by card: ${acc45616SearchCount}")
+
+      // 9. Logging statistics for DOC_OPEN events
       println(s"Total DOC_OPEN events: ${doEventsRDD.count()}")
       println(s"Successfully parsed: ${cachedValid.count()}")
       println(s"Failed to parse: ${cachedErrors.count()}")
 
-      // Сохраняем ошибки в файл
+      // Save errors to a file
       cachedErrors.map(e => s"${e.error}\t${e.rawLine}")
-        .saveAsTextFile("logs/doc_open_parse_errors/")
+        .coalesce(1)
+        .saveAsTextFile(s"logs/doc_open_parse_errors_$timestamp")
 
-      // Преобразуем дату в формат yyyy-MM-dd для корректной сортировки
+      // Convert the date to yyyy-MM-dd format
       def reformatDate(originalDate: String): String = {
         val formatterInput = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val formatterOutput = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
         java.time.LocalDate.parse(originalDate, formatterInput).format(formatterOutput)
       }
 
-      // Получаем статистику и преобразуем даты
-      val dailyStats = cachedValid
-        .map(doc => {
-          val dateFormatted = reformatDate(doc.date.date) // Преобразуем dd.MM.yyyy → yyyy-MM-dd
-          (dateFormatted, doc.code)
-        })
-        .countByValue() // (date, doc) -> count
+      // Collecting QS ID as a broadcast variable
+      val qsIds = parsedQSEvents
+        .map(_.id)
+        .distinct()
+        .toLocalIterator
+        .toSet
+      val broadcastQsIds = sc.broadcast(qsIds)
 
-      // Вариант для больших данных (чисто RDD)
+      // 10. Calculating the total amount of DOC_OPEN through QS
       val dailyStatsRDD = cachedValid
-        .map(doc => {
-          val dateFormatted = reformatDate(doc.date.date)
-          ((dateFormatted, doc.code), 1)
-        })
-        .reduceByKey(_ + _)
-        .map { case ((date, doc), count) =>
-          s"$date,DOC_OPEN,$doc,$count"
+        .filter(doc => broadcastQsIds.value.contains(doc.id))
+        .mapPartitions { docs =>
+          val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+          docs.map { doc =>
+            val dateFormatted = doc.date.date.format(formatter)
+            ((dateFormatted, doc.code), 1)
+          }
         }
-        .sortBy(identity) // Сортировка по строке (уже в формате yyyy-MM-dd)
-        .coalesce(1)
+        .reduceByKey(_ + _, numPartitions = 200)
+        .cache()
 
-      dailyStatsRDD.saveAsTextFile("output/daily_doc_stats_rdd")
+      val totalDocOpenWithQsId = dailyStatsRDD
+        .map(_._2)
+        .aggregate(0)(_ + _, _ + _)
+      println(s"Total number of DOC_OPEN through QS: $totalDocOpenWithQsId")
 
-      // Дополнительный анализ ошибок (пример)
+      // Continue processing
+      dailyStatsRDD
+        .map { case ((date, doc), count) =>
+          new java.lang.StringBuilder()
+            .append(s"${reformatDate(date)}").append(",DOC_OPEN,")
+            .append(doc).append(",")
+            .append(count)
+            .toString()
+        }
+        .sortBy(identity, false, 200)
+        .repartition(1)
+        .saveAsTextFile(s"output/daily_doc_stats_rdd_$timestamp")
+
+      // Aggregate by date
+      val docsByDateRDD = dailyStatsRDD
+        .map { case ((date, doc), count) =>
+          (doc, (date, count))
+        }
+        .groupByKey()
+        .mapValues { datesWithCounts =>
+          val dates = datesWithCounts.map(_._1).toList.sorted
+          val totalCount = datesWithCounts.map(_._2).sum
+          (totalCount, dates)
+        }
+        .sortBy(_._2._1, false)
+
+      // Save to separate file
+      docsByDateRDD
+        .map { case (doc, (count, dates)) =>
+          val datesString = dates.mkString(",")
+          s"DOC_OPEN,$doc,$count,$datesString"
+        }
+        .repartition(1)
+        .saveAsTextFile(s"output/docs_aggregated_by_date_$timestamp")
+
+      // Errors analysis - example ???
       val emptyDateErrors = cachedErrors.filter(_.error == "Empty date field").count()
       println(s"\nDocuments with empty date: $emptyDateErrors")
-
-
     } finally {
       spark.stop()
     }
