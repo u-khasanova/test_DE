@@ -7,7 +7,6 @@ import scala.util.matching.Regex
 object DOEventParser {
   case class ParsedDORecord(id: String, date: DateTimeParts, code: String)
   case class ParseError(rawLine: String, error: String)
-
   private val doPattern: Regex =
     """^DOC_OPEN\s+([^\s]*)\s+([\w-]*\d+)\s+(\w+_\d+)\s*$""".r
 

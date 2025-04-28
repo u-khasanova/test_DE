@@ -6,7 +6,6 @@ import scala.util.matching.Regex
 
 object CSEventParser {
   case class ParsedCSRecord(id: String, date: DateTimeParts, codes: List[String])
-
   private val csPattern: Regex =
     """^CARD_SEARCH_START\s+([^\s]+).*?CARD_SEARCH_END\s+([\w-]*\d+)\s+((?:\w+_\d+\s*)*)""".r
 
@@ -17,7 +16,6 @@ object CSEventParser {
           ParsedCSRecord(
             id,
             dtParts,
-            // Обрабатываем пустые коды:
             if (codesStr.trim.isEmpty) Nil else codesStr.trim.split("\\s+").toList
           )
         }
