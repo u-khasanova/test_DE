@@ -63,35 +63,35 @@ object DOEventParserTest extends App {
     println("Starting DOEventParser tests")
     println("="*50 + "\n")
 
-    println("Тестирование parseDOLine:")
+    println("Тesting parseDOLine:")
     testData.foreach { line =>
-      println(s"\nСтрока: ${line.take(60)}")
+      println(s"\nRecord: ${line.take(60)}")
       parseDOLine(line) match {
         case Right(record) =>
-          println("Успешный парсинг:")
+          println("Successfully parsed:")
           println(s"ID: ${record.id}")
-          println(s"Дата: ${record.date.date}")
-          println(s"Код: ${record.code}")
+          println(s"Date: ${record.date.date} ${record.date.time}")
+          println(s"Code: ${record.code}")
         case Left(error) =>
-          println(s"Ошибка: ${error.error}")
-          println(s"Контекст: ${error.rawLine}")
+          println(s"Error: ${error.error}")
+          println(s"Context: ${error.rawLine}")
       }
     }
 
     println("\n" + "="*50)
-    println("Тестирование parseDORecords (RDD):")
+    println("Testing parseDORecords (RDD):")
     val rdd = sc.parallelize(testData)
     val (successRecords, errorLogs) = parseDORecords(rdd)
 
-    println(s"\nУспешно распарсено: ${successRecords.count()}")
+    println(s"\nSuccessfully parsed: ${successRecords.count()}")
     successRecords.take(3).foreach { record =>
       println(s"ID: ${record.id}, Дата: ${record.date.date}, Код: ${record.code}")
     }
 
-    println(s"\nОшибок парсинга: ${errorLogs.count()}")
+    println(s"\nParse error count: ${errorLogs.count()}")
     errorLogs.take(3).foreach { error =>
-      println(s"Ошибка: ${error.error}")
-      println(s"Контекст: ${error.rawLine}")
+      println(s"Error: ${error.error}")
+      println(s"Context: ${error.rawLine}")
     }
   } finally {
     sc.stop()
