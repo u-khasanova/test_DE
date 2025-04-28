@@ -27,6 +27,20 @@
             <artifactId>scala-library</artifactId>
             <version>2.12.10</version>
         </dependency>
+        <!-- Основная зависимость ScalaTest -->
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_2.12</artifactId>
+            <version>3.2.15</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Для интеграции с JUnit (опционально) -->
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>junit-4-13_2.12</artifactId>
+            <version>3.2.15.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -39,6 +53,25 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <!-- Плагин для запуска тестов -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>2.0.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>TestSuiteReport.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
