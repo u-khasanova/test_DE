@@ -31,9 +31,37 @@ Apache Maven 3.9.0     // Сборка проекта
 Total lines loaded: 175630
 Total successfully parsed QS events: 16111
 Total successfully parsed CS events: 4059
+
 Number of searches for document ACC_45616 by card: 444
+
 Total DOC_OPEN events: 102872
 Successfully parsed: 96306
 Failed to parse: 6566
 Total number of DOC_OPEN through QS: 77118
+Documents with empty date: 6566
+```
+
+-**Подсчет количества раз, когда в карточке производили поиск документа с идентификатором ACC_45616**
+  - Вывод в консоль
+  - Результат: **444**
+
+
+-**Подсчет статистики открытий документов по дням**
+  - Результат подступен в файле doc_open_stat
+    
+```
+2020-12-26,DOC_OPEN,RLAW411_173686,1
+2020-12-26,DOC_OPEN,RLAW411_147657,2
+2020-12-26,DOC_OPEN,RLAW411_139072,1
+2020-12-26,DOC_OPEN,RLAW411_131280,1
+2020-12-26,DOC_OPEN,RLAW411_121675,1
+...
+```
+-**Агрегация событий открытия по дням**
+  - Результат доступен в файле doc_open_aggregated
+  
+```
+DOC_OPEN,ACC_45616,1083,01.03.2020,01.04.2020, ...
+DOC_OPEN,ACC_45614,1011,01.01.2020,01.03.2020, ...
+DOC_OPEN,CMB_18765,100,01.01.2020,01.09.2020, ...
 ```
