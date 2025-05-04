@@ -1,6 +1,7 @@
 package org.example
-import java.time.format.DateTimeFormatter
+package parser
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.util.Try
 
@@ -9,7 +10,7 @@ case class DateTimeParts(date: String, time: String)
 object DateTimeParser extends Serializable {
   // can be extended
   private val knownDateFormats: List[DateTimeFormatter] = List(
-    DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US),  // 01_Aug_2020_13:48:07
+    DateTimeFormatter.ofPattern("dd_MMM_yyyy'_'HH:mm:ss", Locale.US),  // 01_Aug_2020_13:48:07
     DateTimeFormatter.ofPattern("MMM_dd_yyyy_HH:mm:ss", Locale.US),  // Aug_01_2020_13:48:07
     DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),              // 01.07.2020_13:42:01
     DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"),              // 01-07-2020 13:42:01
@@ -20,14 +21,7 @@ object DateTimeParser extends Serializable {
   )
 
   def parse(dateStr: String): Option[DateTimeParts] = {
-    val cleanedStr = dateStr match {
-      case s if s.startsWith("Mon,_") || s.startsWith("Tue,_") ||
-        s.startsWith("Wed,_") || s.startsWith("Thu,_") ||
-        s.startsWith("Fri,_") || s.startsWith("Sat,_") ||
-        s.startsWith("Sun,_") =>
-        s.substring(5).split("_\\+").head
-      case _ => dateStr
-    }
+    val cleanedStr = dateStr.replaceAll("^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?_?", "")
 
     knownDateFormats.view.flatMap { formatter =>
       Try {

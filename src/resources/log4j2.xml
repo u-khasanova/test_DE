@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" strict="true">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- Полное отключение Spark логов -->
+        <Logger name="org.apache.spark" level="OFF" additivity="false"/>
+        <Logger name="org.sparkproject" level="OFF" additivity="false"/>
+        <Logger name="org.apache.hadoop" level="OFF" additivity="false"/>
+
+        <Root level="WARN">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

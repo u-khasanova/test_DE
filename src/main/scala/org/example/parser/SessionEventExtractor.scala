@@ -1,5 +1,8 @@
 package org.example
+package parser
+
 import org.apache.spark.rdd.RDD
+
 import scala.collection.mutable
 
 object SessionEventExtractor {
