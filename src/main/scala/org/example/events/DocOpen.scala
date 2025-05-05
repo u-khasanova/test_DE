@@ -10,14 +10,21 @@ case class DocOpen(
 object DocOpen {
 
   def parse(line: String): Option[DocOpen] = {
-    val trimmed = line.split(" ")
-    val date = DateTimeParser.parse(trimmed(1)).getOrElse(return None)
-    val id = trimmed(2).replaceAll("[^0-9]", "")
-    if (id.isEmpty) return None
-    val docId = trimmed(3)
-    if (docId.isEmpty) return None
+    if (line == null || line.trim.isEmpty) return None
 
-    Some(DocOpen(date, id, docId))
+    val parts = line.split("\\s+")
+    if (parts.length < 4) return None
+
+    try {
+      val date = DateTimeParser.parse(parts(1)).getOrElse(return None)
+      val id = parts(2).replaceAll("[^0-9]", "")
+      if (id.isEmpty) return None
+      val docId = parts(3)
+
+      Some(DocOpen(date, id, docId))
+    } catch {
+      case _: Exception => None
+    }
   }
 
 }

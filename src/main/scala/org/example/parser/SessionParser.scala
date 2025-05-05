@@ -26,6 +26,7 @@ object SessionParser {
     @transient private var pendingQSLine: Option[String] = None
     @transient private var inCardSearch: Boolean = false
     @transient private var pendingCardSearchLines: mutable.ListBuffer[String] = mutable.ListBuffer.empty
+    @transient private var processPostEndLine: Boolean = false
 
     def initIfNeeded(): Unit = {
       if (currentSession == null) currentSession = None
@@ -39,12 +40,14 @@ object SessionParser {
     def getPendingQSLine: Option[String] = pendingQSLine
     def getInCardSearch: Boolean = inCardSearch
     def getPendingCardSearchLines: mutable.ListBuffer[String] = pendingCardSearchLines
+    def getProcessPostEndLine: Boolean = processPostEndLine
 
     def setSession(session: Option[SessionBuilder]): Unit = currentSession = session
     def addResult(session: Session): Unit = results += session
     def setPendingQSLine(line: Option[String]): Unit = pendingQSLine = line
     def setInCardSearch(state: Boolean): Unit = inCardSearch = state
     def addPendingCardSearchLine(line: String): Unit = pendingCardSearchLines += line
+    def setProcessPostEndLine(state: Boolean): Unit = processPostEndLine = state
 
     def clearSession(): Unit = currentSession = None
     def clearPendingQSLine(): Unit = pendingQSLine = None
@@ -102,7 +105,6 @@ object SessionParser {
       }
 
       def processQSBlock(firstLine: String, secondLine: String): Unit = {
-        println(s"Processing QS...$firstLine $secondLine")
         SessionHolder.getSession.foreach { builder =>
           QS.parse(s"$firstLine $secondLine").foreach(builder.addQS)
         }
@@ -110,7 +112,6 @@ object SessionParser {
       }
 
       def processCardSearchBlock(): Unit = {
-        println(s"Processing Card Search...${SessionHolder.getPendingCardSearchLines}")
         SessionHolder.getSession.foreach { builder =>
           CardSearch.parse(
             SessionHolder.getPendingCardSearchLines.mkString(" ")
@@ -119,40 +120,60 @@ object SessionParser {
         SessionHolder.clearCardSearchState()
       }
 
-      iter.foreach {
-        case l if l.startsWith("SESSION_START") =>
-          handleSessionStart(l)
+      def synchronizedProcess[T](block: => T): T = SessionHolder.synchronized {
+        block
+      }
 
-        case l if l.startsWith("QS") =>
-          SessionHolder.setPendingQSLine(Some(l))
+      iter.foreach { line =>
+        synchronizedProcess {
+          line match {
+            case l if l.startsWith("SESSION_START") =>
+              handleSessionStart(l)
 
-        case l if SessionHolder.getPendingQSLine.isDefined =>
-          processQSBlock(SessionHolder.getPendingQSLine.get, l)
+            case l if l.startsWith("SESSION_END") =>
+              if (SessionHolder.getSession.isDefined) {
+                handleSessionEnd(l)
+              } else {
+                System.err.println(s"SESSION_END without active session: $l")
+              }
 
-        case l if l.startsWith("CARD_SEARCH_START") =>
-          SessionHolder.setInCardSearch(true)
-          SessionHolder.addPendingCardSearchLine(l)
+            case l if l.startsWith("CARD_SEARCH_START") =>
+              SessionHolder.clearCardSearchState()
+              SessionHolder.setInCardSearch(true)
+              SessionHolder.addPendingCardSearchLine(l)
 
-        case l if SessionHolder.getInCardSearch && !l.startsWith("CARD_SEARCH_END") =>
-          SessionHolder.addPendingCardSearchLine(l)
+            case l if l.startsWith("CARD_SEARCH_END") =>
+              if (SessionHolder.getInCardSearch) {
+                SessionHolder.addPendingCardSearchLine(l)
+                SessionHolder.setProcessPostEndLine(true)
+              }
 
-        case l if SessionHolder.getInCardSearch && l.startsWith("CARD_SEARCH_END") =>
-          SessionHolder.addPendingCardSearchLine(l)
+            case l if SessionHolder.getProcessPostEndLine =>
+              SessionHolder.addPendingCardSearchLine(l)
+              processCardSearchBlock()
+              SessionHolder.setProcessPostEndLine(false)
+              SessionHolder.setInCardSearch(false)
 
-        case l if SessionHolder.getPendingCardSearchLines.nonEmpty &&
-          SessionHolder.getPendingCardSearchLines.last.startsWith("CARD_SEARCH_END") =>
-          SessionHolder.addPendingCardSearchLine(l)
-          processCardSearchBlock()
+            case l if SessionHolder.getInCardSearch =>
+              SessionHolder.addPendingCardSearchLine(l)
 
-        case l if l.startsWith("DOC_OPEN") =>
-          SessionHolder.getSession.foreach { builder =>
-            DocOpen.parse(l).foreach(builder.addDocOpen)
+            case l if l.startsWith("QS") =>
+              SessionHolder.clearPendingQSLine()
+              SessionHolder.setPendingQSLine(Some(l))
+
+            case l if SessionHolder.getPendingQSLine.isDefined =>
+              processQSBlock(SessionHolder.getPendingQSLine.get, l)
+              SessionHolder.clearPendingQSLine()
+
+            case l if l.startsWith("DOC_OPEN") =>
+              SessionHolder.getSession.foreach { builder =>
+                DocOpen.parse(l).foreach(builder.addDocOpen)
+              }
+
+            case _ =>
+              None
           }
-
-        case l if l.startsWith("SESSION_END") =>
-          handleSessionEnd(l)
-
-        case _ => // ignore other lines
+        }
       }
       SessionHolder.getResults.iterator
     }
