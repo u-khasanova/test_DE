@@ -102,16 +102,19 @@ object SessionParser {
       }
 
       def processQSBlock(firstLine: String, secondLine: String): Unit = {
+        println(s"Processing QS...$firstLine $secondLine")
         SessionHolder.getSession.foreach { builder =>
-          QSParser.parse(s"$firstLine $secondLine").foreach(builder.addQS)
+          QS.parse(s"$firstLine $secondLine").foreach(builder.addQS)
         }
         SessionHolder.clearPendingQSLine()
       }
 
       def processCardSearchBlock(): Unit = {
+        println(s"Processing Card Search...${SessionHolder.getPendingCardSearchLines}")
         SessionHolder.getSession.foreach { builder =>
-          CardSearchParser.parse(SessionHolder.getPendingCardSearchLines.mkString(" "))
-            .foreach(builder.addCardSearch)
+          CardSearch.parse(
+            SessionHolder.getPendingCardSearchLines.mkString(" ")
+          ).foreach(builder.addCardSearch)
         }
         SessionHolder.clearCardSearchState()
       }
@@ -143,7 +146,7 @@ object SessionParser {
 
         case l if l.startsWith("DOC_OPEN") =>
           SessionHolder.getSession.foreach { builder =>
-            DocOpenParser.parse(l).foreach(builder.addDocOpen)
+            DocOpen.parse(l).foreach(builder.addDocOpen)
           }
 
         case l if l.startsWith("SESSION_END") =>

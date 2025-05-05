@@ -14,7 +14,7 @@ object MainApp {
   Configurator.initialize(null, source)
 
   private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-//  logger.warn("Тест логирования - это сообщение должно появиться")
+  logger.warn("Тест логирования - это сообщение должно появиться")
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder()
