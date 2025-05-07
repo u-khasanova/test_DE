@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 case class Session(
                     startDate: DateTimeParts,
                     endDate: DateTimeParts,
-                    QS: List[QS],
-                    cardSearch: List[CardSearch],
-                    docOpen: List[DocOpen]
+                    QSs: List[QS],
+                    cardSearches: List[CardSearch],
+                    docOpens: List[DocOpen]
                   )
