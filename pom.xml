@@ -170,8 +170,6 @@
                 <version>${scoverage.plugin.version}</version>
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
-                    <minimumCoverage>80</minimumCoverage>
-                    <failOnMinimumCoverage>false</failOnMinimumCoverage>
                 </configuration>
             </plugin>
         </plugins>
