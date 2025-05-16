@@ -1,88 +1,159 @@
 package org.example.parser
 
-import org.apache.spark.rdd.RDD
-import org.example.events.{CardSearch, DocOpen, QS, Session}
-import scala.collection.mutable
+import org.apache.spark.util.LongAccumulator
+import org.example.Main.{ParseError, logger}
+import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processors.SessionBuilder
 
 object SessionParser {
 
-  private case class SessionBuilder(
-                                     startDate: DateTimeParts,
-                                     var endDate: DateTimeParts,
-                                     QSs: mutable.ListBuffer[QS] = mutable.ListBuffer.empty,
-                                     cardSearches: mutable.ListBuffer[CardSearch] = mutable.ListBuffer.empty,
-                                     docOpens: mutable.ListBuffer[DocOpen] = mutable.ListBuffer.empty
-                                   ) {
-    def build(): Option[Session] = {
-      Some(Session(startDate, endDate, QSs.toList, cardSearches.toList, docOpens.toList))
+  def parse(
+      content: String,
+      filePath: String,
+      errorAccumulator: LongAccumulator
+  ): Option[Session] = {
+
+    val lines = content
+      .split("\n")
+      .iterator
+      .buffered
+
+    var currentSession: Option[SessionBuilder] = None
+
+    while (lines.hasNext) {
+      val line = lines.head
+      try {
+        line match {
+          case l if l.startsWith("SESSION_START") =>
+            currentSession =
+              parseStart(l, lines, filePath, currentSession, errorAccumulator)
+
+          case l if l.startsWith("SESSION_END") =>
+            currentSession =
+              parseEnd(l, lines, filePath, currentSession, errorAccumulator)
+
+          case l if l.startsWith("QS") && currentSession.isDefined =>
+            val sessionDate =
+              if (
+                currentSession.get.startDate.date == currentSession.get.endDate.date
+              ) {
+                Some(currentSession.get.startDate)
+              } else None
+            QuickSearch
+              .parse(lines, filePath, errorAccumulator, sessionDate)
+              .foreach(currentSession.get.quickSearches += _)
+
+          case l
+              if l.startsWith(
+                "CARD_SEARCH_START"
+              ) && currentSession.isDefined =>
+            val sessionDate =
+              if (
+                currentSession.get.startDate.date == currentSession.get.endDate.date
+              ) {
+                Some(currentSession.get.startDate)
+              } else None
+            CardSearch
+              .parse(lines, filePath, errorAccumulator, sessionDate)
+              .foreach(currentSession.get.cardSearches += _)
+
+          case l if l.startsWith("DOC_OPEN") && currentSession.isDefined =>
+            val sessionDate =
+              if (
+                currentSession.get.startDate.date == currentSession.get.endDate.date
+              ) {
+                Some(currentSession.get.startDate)
+              } else None
+            DocOpen
+              .parse(lines, filePath, errorAccumulator, sessionDate)
+              .foreach(currentSession.get.docOpens += _)
+
+          case _ => lines.next()
+        }
+      } catch {
+        case e: Exception =>
+          errorAccumulator.add(1)
+          val err = ParseError(
+            filePath,
+            line,
+            e.getClass.getSimpleName,
+            e.getMessage,
+            "Session"
+          )
+          logger.error(err.toLogString)
+          if (lines.hasNext) lines.next()
+      }
+    }
+    currentSession.flatMap(_.buildWithRecoveredIds())
+  }
+
+  private def parseStart(
+      line: String,
+      lines: BufferedIterator[String],
+      filePath: String,
+      currentSession: Option[SessionBuilder],
+      errorAccumulator: LongAccumulator
+  ): Option[SessionBuilder] = {
+    currentSession.flatMap(_.build())
+    lines.next()
+
+    val datePart = line
+      .split(" ")
+      .lift(1)
+      .getOrElse("")
+
+    DateTime.parse(datePart) match {
+      case dt =>
+        Some(SessionBuilder(dt, dt))
+
+      case e =>
+        val err = ParseError(
+          filePath,
+          line,
+          "InvalidDateTimeFormat",
+          s"Invalid SESSION_START datetime: $e",
+          "Session"
+        )
+        logger.error(err.toLogString)
+        errorAccumulator.add(1)
+        None
     }
   }
 
-  def parse(content: String): Option[Session] = {
-    val lines = content.split("\n").iterator
-    var currentSession: Option[SessionBuilder] = None
+  private def parseEnd(
+      line: String,
+      lines: BufferedIterator[String],
+      filePath: String,
+      currentSession: Option[SessionBuilder],
+      errorAccumulator: LongAccumulator
+  ): Option[SessionBuilder] = {
+    lines.next()
 
-    def processLine(line: String): Unit = {
-      line.trim match {
-        case l if l.startsWith("SESSION_START") =>
-          currentSession.flatMap(_.build())
+    val datePart = line
+      .split(" ")
+      .lift(1)
+      .getOrElse("")
 
-          l.split(" ").drop(1).headOption.flatMap(DateTimeParser.parse) match {
-            case Some(dt) => currentSession = Some(SessionBuilder(dt, dt))
-            case None => System.err.println(s"Invalid SESSION_START timestamp: $l")
-          }
+    val result = DateTime.parse(datePart) match {
+      case dt =>
+        currentSession.map { sb =>
+          sb.endDate = dt
+          sb
+        }
 
-        case l if l.startsWith("SESSION_END") && currentSession.isDefined =>
-          l.split(" ").drop(1).headOption.flatMap(DateTimeParser.parse) match {
-            case Some(dt) => currentSession.foreach(_.endDate = dt)
-            case None => System.err.println(s"Invalid SESSION_END timestamp: $l")
-          }
-
-        case l if l.startsWith("QS") && currentSession.isDefined =>
-          val qsContent = new mutable.StringBuilder(l)
-          if (lines.hasNext) {
-            val nextLine = lines.next().trim
-            qsContent.append(" ").append(nextLine)
-          }
-          QS.parse(qsContent.toString).foreach { qs =>
-            currentSession.foreach(_.QSs += qs)
-          }
-
-        case l if l.startsWith("CARD_SEARCH_START") && currentSession.isDefined =>
-          val cardSearchLines = mutable.ListBuffer(l)
-
-          var foundEnd = false
-          while (lines.hasNext && !foundEnd) {
-            val nextLine = lines.next()
-            cardSearchLines += nextLine
-            foundEnd = nextLine.trim.startsWith("CARD_SEARCH_END")
-            if (foundEnd) {
-              val nextLine = lines.next()
-              cardSearchLines += nextLine
-            }
-          }
-
-          if (!foundEnd) {
-            System.err.println("Unclosed CARD_SEARCH block")
-          } else {
-            CardSearch.parse(cardSearchLines.mkString(" ")).foreach { cs =>
-              currentSession.foreach(_.cardSearches += cs)
-            }
-          }
-
-        case l if l.startsWith("DOC_OPEN") && currentSession.isDefined =>
-          DocOpen.parse(l).foreach { doc =>
-            currentSession.foreach(_.docOpens += doc)
-          }
-
-        case _ =>
-      }
+      case e =>
+        val err = ParseError(
+          filePath,
+          line,
+          "InvalidDateTimeFormat",
+          s"Invalid SESSION_END datetime: $e",
+          "Session"
+        )
+        logger.error(err.toLogString)
+        errorAccumulator.add(1)
+        currentSession
     }
-
-    while (lines.hasNext) {
-      processLine(lines.next())
-    }
-
-    currentSession.flatMap(_.build())
+    if (lines.hasNext) lines.next()
+    result
   }
 }
