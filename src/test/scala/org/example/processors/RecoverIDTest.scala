@@ -1,7 +1,7 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.parser.DateTime
+import org.example.fields.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

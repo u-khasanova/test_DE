@@ -1,47 +1,28 @@
 package org.example.events
 
-import org.apache.spark.util.LongAccumulator
-import org.example.Main.{ParseError, logger}
-import org.example.parser.DateTime
-
+import org.example.fields.DateTime
 import scala.collection.mutable
 import scala.util.Try
 
 case class CardSearch(
-    date: DateTime,
-    id: Int,
+    date: Option[DateTime],
+    id: Option[Int],
     query: String,
-    docIds: List[String]
+    docIds: List[String],
+    docOpens: mutable.ListBuffer[DocOpen] = mutable.ListBuffer.empty
 )
 
 object CardSearch {
 
   def parse(
-      lines: BufferedIterator[String],
-      filePath: String,
-      errorAccumulator: LongAccumulator,
-      sessionDate: Option[DateTime] = None
-  ): Option[CardSearch] = {
-    extract(lines, sessionDate) match {
-      case Right(result) => Some(result)
-      case Left((content, e)) =>
-        errorAccumulator.add(1)
-        val err = ParseError(
-          filePath,
-          content,
-          e.getClass.getSimpleName,
-          e.getMessage,
-          "CardSearch"
-        )
-        logger.error(err.toLogString)
-        None
-    }
+      lines: BufferedIterator[String]
+  ): CardSearch = {
+    extract(lines)
   }
 
   def extract(
-      lines: BufferedIterator[String],
-      sessionDate: Option[DateTime]
-  ): Either[(String, Throwable), CardSearch] = {
+      lines: BufferedIterator[String]
+  ): CardSearch = {
     val content = new mutable.StringBuilder(lines.next().trim)
     var foundEnd = false
 
@@ -54,23 +35,15 @@ object CardSearch {
 
     val fullContent = content.toString()
 
-    Try {
-      val parts = fullContent.split("CARD_SEARCH_END")
-      val beforeEnd = parts(0).trim.split("\\s+", 3)
-      val afterEnd = parts(1).trim.split("\\s+")
+    val parts = fullContent.split("CARD_SEARCH_END")
+    val beforeEnd = parts(0).trim.split("\\s+", 3)
+    val afterEnd = parts(1).trim.split("\\s+")
 
-      val date = Try(DateTime.parse(beforeEnd(1))).recover {
-        case _ if sessionDate.isDefined => sessionDate.get
-      }.get
+    val date = DateTime.parse(beforeEnd(1))
+    val query = beforeEnd(2)
+    val id = Try(afterEnd.head.toInt.abs).toOption
+    val docIds = if (id.isEmpty) afterEnd.toList else afterEnd.tail.toList
 
-      CardSearch(
-        date = date,
-        id = Try(afterEnd.head.toInt.abs).getOrElse(0),
-        query = beforeEnd(2),
-        docIds =
-          if (Try(afterEnd.head.toInt.abs).getOrElse(0) == 0) afterEnd.toList
-          else afterEnd.tail.toList
-      )
-    }.toEither.left.map(e => (fullContent, e))
+    CardSearch(date, id, query, docIds)
   }
 }

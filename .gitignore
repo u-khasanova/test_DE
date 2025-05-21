@@ -20,6 +20,7 @@ out/
 !**/src/test/**/out/
 **/src/main/resources/
 **/src/main/output
+**/src/main/scala/org/example/parser/DateTimeParser.scala
 
 ### Eclipse ###
 .apt_generated
