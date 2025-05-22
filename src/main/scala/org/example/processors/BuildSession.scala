@@ -5,7 +5,7 @@ import org.example.fields.DateTime
 
 import scala.collection.mutable
 
-case class SessionBuilder(
+case class BuildSession(
     file: String,
     var startDate: Option[DateTime] = None,
     var endDate: Option[DateTime] = None,
@@ -41,7 +41,7 @@ case class SessionBuilder(
 
   def buildWithRecoveredIdsAndRecoveredDates(): Option[Session] = {
     build()
-      .map(RecoverID.recover)
+      .map(RecoverEmptyId.recover)
       .map(RecoverEmptyDate.recover)
       .map(MapDocOpens.mapDocOpens)
   }
@@ -54,7 +54,7 @@ case class SessionBuilder(
 
   def buildWithRecoveredIds(): Option[Session] = {
     build()
-      .map(RecoverID.recover)
+      .map(RecoverEmptyId.recover)
       .map(MapDocOpens.mapDocOpens)
   }
 }

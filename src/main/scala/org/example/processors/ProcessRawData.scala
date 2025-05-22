@@ -19,7 +19,7 @@ object ProcessRawData {
       .iterator
       .buffered
 
-    val currentSession = SessionBuilder(filePath)
+    val currentSession = BuildSession(filePath)
     currentSession.build()
 
     while (lines.hasNext) {

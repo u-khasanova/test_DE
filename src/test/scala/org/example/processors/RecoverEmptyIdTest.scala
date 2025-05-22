@@ -5,7 +5,7 @@ import org.example.fields.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class RecoverIDTest extends AnyFunSuite with Matchers {
+class RecoverEmptyIdTest extends AnyFunSuite with Matchers {
   private val testDate = DateTime.parse("08.11.2020_12:29:47")
 
   test("recover DocOpen ids from unique QuickSearch references") {
@@ -23,7 +23,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen1, docOpen2, docOpen3)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
 
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
@@ -54,7 +54,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen1, docOpen2, docOpen3)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
 
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
@@ -83,7 +83,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
     )
@@ -105,7 +105,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
     )
@@ -130,7 +130,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(recovered.quickSearches.head.id.contains(123))
   }
 
@@ -153,7 +153,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(recovered.cardSearches.head.id.contains(456))
   }
 
@@ -183,7 +183,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(recovered.quickSearches.head.id.isEmpty)
     assert(recovered.cardSearches.head.id.isEmpty)
     assert(
@@ -201,7 +201,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
         List.empty,
         List.empty
       )
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     recovered shouldBe session
   }
 
@@ -219,7 +219,7 @@ class RecoverIDTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = RecoverID.recover(session)
+    val recovered = RecoverEmptyId.recover(session)
     assert(recovered.quickSearches.head.id.contains(123))
     assert(recovered.cardSearches.head.id.contains(456))
     assert(recovered.docOpens.head.id.isEmpty)

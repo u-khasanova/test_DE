@@ -47,7 +47,6 @@ object Main {
         s"\nDocument ${task1.targetDocId} was searched in cards ${task1.searchCount} times"
       )
 
-      sessions.foreach(session => session.docOpens.foreach(println))
       val task2 = Task2.execute(sessions)
       Task2.saveResults(task2, outputPath, DELIMITER)
 

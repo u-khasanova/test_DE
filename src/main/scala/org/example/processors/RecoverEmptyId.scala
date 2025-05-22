@@ -4,7 +4,7 @@ import org.example.events.{CardSearch, QuickSearch, Session}
 
 import scala.collection.mutable
 
-object RecoverID {
+object RecoverEmptyId {
   def recover(session: Session): Session = {
     val docIdToSearches = mutable.Map[String, List[Option[Int]]]()
 
