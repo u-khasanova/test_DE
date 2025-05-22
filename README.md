@@ -4,9 +4,6 @@
 
 ## 📌 Архитектура проекта
 
-[![Архитектура проекта](https://docs.google.com/drawings/d/e/2PACX-1vRxt3x7fbQ7phT_3z8eUpc5nJW_NbU5yCgOsPuT7kAOCSWxXyZ7oKKLic5spuktzNir2fjPjQ-ZrP73/pub?w=901&h=720)](
-https://docs.google.com/drawings/d/e/2PACX-1vRxt3x7fbQ7phT_3z8eUpc5nJW_NbU5yCgOsPuT7kAOCSWxXyZ7oKKLic5spuktzNir2fjPjQ-ZrP73/pub?w=901&h=720)
-
 ```mermaid
 graph TD
     A[Тестирование системы] --> B[Модульные тесты]
