@@ -19,11 +19,6 @@ graph TD
     B2 --> B21[MapDocOpensTest]
     B2 --> B22[RecoverEmptyDateTest]
     B2 --> B23[RecoverIDTest]
-    
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style B1 fill:#f96,stroke:#333
-    style B2 fill:#f96,stroke:#333
 ```
 
 ## 📊 Выходные данные
