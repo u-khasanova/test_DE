@@ -8,6 +8,8 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.gitignore
+.scalafmt.conf
 *.log
 logs/
 **/logs/
