@@ -7,7 +7,6 @@
 ```mermaid
 graph TD
     A[Тестирование системы] --> B[Модульные тесты]
-    A --> C[Интеграционные тесты]
     
     B --> B1[Тесты парсеров]
     B1 --> B11[CardSearchTest]
@@ -20,10 +19,6 @@ graph TD
     B2 --> B21[MapDocOpensTest]
     B2 --> B22[RecoverEmptyDateTest]
     B2 --> B23[RecoverIDTest]
-    
-    C --> C1[Тесты взаимодействия]
-    C1 --> C11[Связь парсеров с процессорами]
-    C1 --> C12[Полный цикл обработки Session]
     
     style A fill:#f9f,stroke:#333
     style B fill:#bbf,stroke:#333
