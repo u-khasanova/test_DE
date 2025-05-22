@@ -22,7 +22,6 @@ graph TD
     
     style A fill:#f9f,stroke:#333
     style B fill:#bbf,stroke:#333
-    style C fill:#bbf,stroke:#333
     style B1 fill:#f96,stroke:#333
     style B2 fill:#f96,stroke:#333
 ```
