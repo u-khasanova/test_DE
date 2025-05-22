@@ -8,37 +8,31 @@
 https://docs.google.com/drawings/d/e/2PACX-1vRxt3x7fbQ7phT_3z8eUpc5nJW_NbU5yCgOsPuT7kAOCSWxXyZ7oKKLic5spuktzNir2fjPjQ-ZrP73/pub?w=901&h=720)
 
 ```mermaid
-flowchart TB
-    subgraph Парсеры
-        A[CardSearch] --> A1[Парсинг даты]
-        A --> A2[Парсинг ID]
-        A --> A3[Парсинг запроса]
-        B[DocOpen] --> B1[Парсинг даты]
-        B --> B2[Парсинг ID]s
-        C[QuickSearch] --> C1[Парсинг даты]
-        C --> C2[Парсинг ID]
-        D[Session] --> D1[Парсинг start/end]
-    end
+graph TD
+    A[Тестирование системы] --> B[Модульные тесты]
+    A --> C[Интеграционные тесты]
     
-    subgraph Процессоры
-        E[MapDocOpens] --> E1[Связывание DocOpen]
-        F[RecoverEmptyDate] --> F1[Восстановление дат]
-        G[RecoverID] --> G1[Восстановление ID]
-    end
+    B --> B1[Тесты парсеров]
+    B1 --> B11[CardSearchTest]
+    B1 --> B12[DocOpenTest]
+    B1 --> B13[QuickSearchTest]
+    B1 --> B14[SessionTest]
+    B1 --> B15[DateTimeTest]
     
-    subgraph Тесты
-        T1[CardSearchTest] -->|Проверяет| A
-        T2[DocOpenTest] -->|Проверяет| B
-        T3[QuickSearchTest] -->|Проверяет| C
-        T4[SessionTest] -->|Проверяет| D
-        T5[MapDocOpensTest] -->|Проверяет| E
-        T6[RecoverEmptyDateTest] -->|Проверяет| F
-        T7[RecoverIDTest] -->|Проверяет| G
-    end
+    B --> B2[Тесты процессоров]
+    B2 --> B21[MapDocOpensTest]
+    B2 --> B22[RecoverEmptyDateTest]
+    B2 --> B23[RecoverIDTest]
     
-    style Парсеры fill:#f9f2d9,stroke:#333
-    style Процессоры fill:#d9f9f9,stroke:#333
-    style Тесты fill:#e2f9d9,stroke:#333
+    C --> C1[Тесты взаимодействия]
+    C1 --> C11[Связь парсеров с процессорами]
+    C1 --> C12[Полный цикл обработки Session]
+    
+    style A fill:#f9f,stroke:#333
+    style B fill:#bbf,stroke:#333
+    style C fill:#bbf,stroke:#333
+    style B1 fill:#f96,stroke:#333
+    style B2 fill:#f96,stroke:#333
 ```
 
 ## 📊 Выходные данные
