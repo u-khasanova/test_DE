@@ -14,23 +14,16 @@ object DocOpen {
       lines: BufferedIterator[String]
   ): DocOpen = {
     val content = lines.next()
-    extract(content)
-  }
+    val parts = content.split("\\s+").tail
+    val date = DateTime.parse(parts(0))
 
-  def extract(
-      content: String
-  ): DocOpen = {
-    val parts = content.split("\\s+")
-    val date = DateTime.parse(parts(1))
+    val id =
+      if (date.isEmpty && parts(0).matches("^[0-9].*"))
+        Try(parts(0).toInt.abs).toOption
+      else Try(parts(1).toInt.abs).toOption
 
-    val id = Try(parts(2).toInt.abs).toOption
-      .orElse {
-        Try(parts(1).toInt.abs).toOption
-      }
-
-    val docId = Try(parts(3)).toOption
-      .filter(_.nonEmpty)
-      .orElse(Try(parts(2)).toOption.filter(_.nonEmpty))
+    val docId =
+      if (parts.last.matches("^[0-9].*")) None else Try(parts.last).toOption
 
     DocOpen(date, id, docId)
   }

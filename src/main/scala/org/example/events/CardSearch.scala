@@ -17,12 +17,6 @@ object CardSearch {
   def parse(
       lines: BufferedIterator[String]
   ): CardSearch = {
-    extract(lines)
-  }
-
-  def extract(
-      lines: BufferedIterator[String]
-  ): CardSearch = {
     val content = new mutable.StringBuilder(lines.next().trim)
     var foundEnd = false
 
@@ -36,11 +30,13 @@ object CardSearch {
     val fullContent = content.toString()
 
     val parts = fullContent.split("CARD_SEARCH_END")
-    val beforeEnd = parts(0).trim.split("\\s+", 3)
+    val beforeEnd = parts(0).trim.split("\\s+").tail
     val afterEnd = parts(1).trim.split("\\s+")
 
-    val date = DateTime.parse(beforeEnd(1))
-    val query = beforeEnd(2)
+    val date = DateTime.parse(beforeEnd(0))
+    val query =
+      if (date.isEmpty) beforeEnd.mkString(" ")
+      else beforeEnd.tail.mkString(" ")
     val id = Try(afterEnd.head.toInt.abs).toOption
     val docIds = if (id.isEmpty) afterEnd.toList else afterEnd.tail.toList
 

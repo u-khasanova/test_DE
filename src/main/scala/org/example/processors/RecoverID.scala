@@ -6,88 +6,94 @@ import scala.collection.mutable
 
 object RecoverID {
   def recover(session: Session): Session = {
-
-    /*
-    Step 1: recover DocOpen ids based on quick / card search ids
-
-    DocOpen must inherit id from parent search if DocOpen.docId:
-     - belongs only to QuickSearch.docIds
-    OR
-     - belongs only to CardSearch.docIds
-     */
-
-    val docIdToSearchId = mutable.Map[String, Option[Int]]()
-    val ambiguousDocs = mutable.Set[String]()
+    val docIdToSearches = mutable.Map[String, List[Option[Int]]]()
 
     (session.quickSearches ++ session.cardSearches).foreach {
-      case qs: QuickSearch if qs.id.nonEmpty =>
+      case qs: QuickSearch =>
         qs.docIds.foreach { docId =>
-          if (docIdToSearchId.contains(docId)) ambiguousDocs.add(docId)
-          else docIdToSearchId.put(docId, qs.id)
+          docIdToSearches.update(
+            docId,
+            qs.id :: docIdToSearches.getOrElse(docId, Nil)
+          )
         }
-      case cs: CardSearch if cs.id.nonEmpty =>
+      case cs: CardSearch =>
         cs.docIds.foreach { docId =>
-          if (docIdToSearchId.contains(docId)) ambiguousDocs.add(docId)
-          else docIdToSearchId.put(docId, cs.id)
+          docIdToSearches.update(
+            docId,
+            cs.id :: docIdToSearches.getOrElse(docId, Nil)
+          )
         }
-      case _ =>
-    }
-
-    val recoveredDocOpens = session.docOpens.map { docOpen =>
-      if (docOpen.id.isEmpty) {
-        docIdToSearchId.get(docOpen.docId.get) match {
-          case Some(id) if !ambiguousDocs(docOpen.docId.get) =>
-            docOpen.copy(id = id)
-          case _ => docOpen
-        }
-      } else docOpen
     }
 
     /*
-    Step 2: recover quick / card search
+        Step 1: recover DocOpen ids based on quick / card search ids
 
-    Update search's id if at least one document was opened only within given search
+        DocOpen must inherit id from parent search if DocOpen.docId:
+         - belongs only to QuickSearch.docIds
+        OR
+         - belongs only to CardSearch.docIds
      */
 
-    val searchIdToDocIds = mutable.Map[Int, Set[String]]()
-
-    recoveredDocOpens.foreach { docOpen =>
-      if (docOpen.id.nonEmpty) {
-        val currentDocs = searchIdToDocIds.getOrElse(docOpen.id.get, Set.empty)
-        searchIdToDocIds.put(docOpen.id.get, currentDocs + docOpen.docId.get)
+    val recoveredDocOpens = session.docOpens.map { docOpen =>
+      docOpen.docId match {
+        case Some(docId) if docOpen.id.isEmpty || docOpen.id.contains(0) =>
+          docIdToSearches.get(docId) match {
+            case Some(List(searchId)) =>
+              searchId match {
+                case Some(id) => docOpen.copy(id = Some(id))
+                case None     => docOpen
+              }
+            case _ => docOpen
+          }
+        case _ => docOpen
       }
     }
 
-    val recoveredQuickSearches = session.quickSearches.map {
-      case qs: QuickSearch if qs.id.isEmpty =>
-        val possibleId = qs.docIds.flatMap { docId =>
-          recoveredDocOpens
-            .find(_.docId.contains(docId))
-            .filter(_.id.nonEmpty)
-            .map(_.id)
-        }.headOption
+    /*
+        Step 2: recover quick / card search
 
-        possibleId match {
-          case Some(id) => qs.copy(id = id)
+        Update search's id if at least one document was opened only within given search
+     */
+
+    val recoveredQuickSearches = session.quickSearches.map { qs =>
+      if (qs.id.isEmpty) {
+        val uniqueDocId = qs.docIds.find { docId =>
+          docIdToSearches.get(docId) match {
+            case Some(List(searchId)) =>
+              searchId.isEmpty
+            case _ => false
+          }
+        }
+
+        uniqueDocId.flatMap { docId =>
+          recoveredDocOpens.find(_.docId.contains(docId)).flatMap(_.id)
+        } match {
+          case Some(id) => qs.copy(id = Some(id))
           case None     => qs
         }
-      case qs => qs
+      } else {
+        qs
+      }
     }
 
-    val recoveredCardSearches = session.cardSearches.map {
-      case cs: CardSearch if cs.id.isEmpty =>
-        val possibleId = cs.docIds.flatMap { docId =>
-          recoveredDocOpens
-            .find(_.docId.contains(docId))
-            .filter(_.id.nonEmpty)
-            .map(_.id)
-        }.headOption
+    val recoveredCardSearches = session.cardSearches.map { cs =>
+      if (cs.id.isEmpty) {
+        val uniqueDocId = cs.docIds.find { docId =>
+          docIdToSearches.get(docId) match {
+            case Some(List(searchId)) => searchId.isEmpty
+            case _                    => false
+          }
+        }
 
-        possibleId match {
-          case Some(id) => cs.copy(id = id)
+        uniqueDocId.flatMap { docId =>
+          recoveredDocOpens.find(_.docId.contains(docId)).flatMap(_.id)
+        } match {
+          case Some(id) => cs.copy(id = Some(id))
           case None     => cs
         }
-      case cs => cs
+      } else {
+        cs
+      }
     }
 
     session.copy(

@@ -27,7 +27,7 @@ object ProcessRawData {
       try {
         line match {
           case l if l.split(" ")(0) == "SESSION_START" =>
-            currentSession.startDate = Session.parseStart(l, lines)
+            currentSession.startDate = Session.parseStart(lines)
 
           case l if l.split(" ")(0) == "QS" =>
             val qs = QuickSearch
@@ -45,7 +45,7 @@ object ProcessRawData {
             currentSession.docOpens += docOpen
 
           case l if l.split(" ")(0) == "SESSION_END" =>
-            currentSession.endDate = Session.parseEnd(l, lines)
+            currentSession.endDate = Session.parseEnd(lines)
 
           case _ => if (lines.hasNext) lines.next()
         }

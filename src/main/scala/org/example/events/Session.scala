@@ -14,10 +14,10 @@ case class Session(
 object Session {
 
   def parseStart(
-      line: String,
       lines: BufferedIterator[String]
   ): Option[DateTime] = {
-    lines.next()
+
+    val line = lines.next()
 
     val datePart = line
       .split(" ")
@@ -30,10 +30,10 @@ object Session {
   }
 
   def parseEnd(
-      line: String,
       lines: BufferedIterator[String]
   ): Option[DateTime] = {
-    lines.next()
+
+    val line = lines.next()
 
     val datePart = line
       .split(" ")

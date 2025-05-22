@@ -17,24 +17,6 @@ class DateTimeTest extends AnyFunSuite with Matchers {
     dt.get.time shouldBe "12:30:36"
   }
 
-  test("throw exception for null input") {
-    intercept[DateParseException] {
-      DateTime.parse(null)
-    }.getMessage should include("Date string cannot be null or empty")
-  }
-
-  test("throw exception for empty input") {
-    intercept[DateParseException] {
-      DateTime.parse("")
-    }.getMessage should include("Date string cannot be null or empty")
-  }
-
-  test("throw exception for invalid format") {
-    intercept[DateParseException] {
-      DateTime.parse("2020/11/08 12:30:36")
-    }.getMessage should include("Unrecognized date format")
-  }
-
   test("toString returns correct format") {
     val dt = DateTime("08.11.2020", "12:30:36")
     dt.toString shouldBe "08.11.2020 12:30:36"

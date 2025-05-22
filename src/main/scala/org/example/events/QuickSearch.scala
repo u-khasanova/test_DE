@@ -17,39 +17,19 @@ object QuickSearch {
   def parse(
       lines: BufferedIterator[String]
   ): QuickSearch = {
-    val line = lines.next().trim
-    val nextLine = lines.next().trim
-    val content = s"$line $nextLine"
+    val line = lines.next().split("\\s+", 3).tail
+    val nextLine = lines.next().split("\\s+")
 
-    extract(content)
-  }
+    val date = DateTime.parse(line(0))
 
-  def extract(
-      content: String
-  ): QuickSearch = {
-    val openBrace = content.indexOf('{')
-    val closeBrace = content.indexOf('}', openBrace + 1)
+    val query =
+      if (line.tail(0).startsWith("{")) line.tail.mkString(" ")
+      else line.mkString(" ")
 
-    val date = DateTime.parse(
-      content
-        .substring(0, openBrace)
-        .split("\\s+")
-        .last
-    )
+    val id = Try(nextLine(0).toInt.abs).toOption
 
-    val query = content
-      .substring(openBrace + 1, closeBrace)
-      .trim
+    val docIds = if (id.isEmpty) nextLine.toList else nextLine.tail.toList
 
-    val parts = content
-      .substring(closeBrace + 1)
-      .trim
-      .split("\\s+")
-
-    val id = Try(parts(0).toInt.abs).toOption
-
-    val docIds = if (id.isEmpty) parts.toList else parts.tail.toList
-
-    QuickSearch(date, id, query, docIds)
+    QuickSearch(date, id, query.slice(1, query.length - 1), docIds)
   }
 }
