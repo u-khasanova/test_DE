@@ -1,9 +1,10 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.fields.DateTime
 
-object RecoverEmptyDate {
+import java.time.LocalDateTime
+
+object EmptyDateProcessor {
 
   def recover(session: Session): Session = {
     val sessionDate = session.startDate
@@ -17,7 +18,7 @@ object RecoverEmptyDate {
 
   private def recoverQuickSearches(
       searches: List[QuickSearch],
-      sessionDate: Option[DateTime]
+      sessionDate: Option[LocalDateTime]
   ): List[QuickSearch] = {
     searches.map { qs =>
       if (qs.date.isEmpty) qs.copy(date = sessionDate) else qs
@@ -26,7 +27,7 @@ object RecoverEmptyDate {
 
   private def recoverCardSearches(
       searches: List[CardSearch],
-      sessionDate: Option[DateTime]
+      sessionDate: Option[LocalDateTime]
   ): List[CardSearch] = {
     searches.map { cs =>
       if (cs.date.isEmpty) cs.copy(date = sessionDate) else cs
@@ -35,7 +36,7 @@ object RecoverEmptyDate {
 
   private def recoverDocOpens(
       opens: List[DocOpen],
-      sessionDate: Option[DateTime]
+      sessionDate: Option[LocalDateTime]
   ): List[DocOpen] = {
     opens.map { doc =>
       if (doc.date.isEmpty) doc.copy(date = sessionDate) else doc

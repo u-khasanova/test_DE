@@ -1,12 +1,20 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.fields.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 
-class RecoverEmptyDateTest extends AnyFunSuite {
-  private val testDate = DateTime.parse("01.09.2020_06:44:35").get
-  private val testDate2 = DateTime.parse("01.09.2020_06:51:02").get
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+class EmptyDateProcessorTest extends AnyFunSuite {
+  private val testDate = LocalDateTime.parse(
+    "01.09.2020_06:44:35",
+    DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss")
+  )
+  private val testDate2 = LocalDateTime.parse(
+    "01.09.2020_06:51:02",
+    DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss")
+  )
 
   test("recover should fill empty dates in all components") {
     val session = Session(
@@ -26,7 +34,7 @@ class RecoverEmptyDateTest extends AnyFunSuite {
       )
     )
 
-    val recovered = RecoverEmptyDate.recover(session)
+    val recovered = EmptyDateProcessor.recover(session)
 
     assert(recovered.quickSearches.head.date.contains(testDate))
     assert(recovered.quickSearches(1).date.contains(testDate2))

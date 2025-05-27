@@ -1,8 +1,8 @@
 package org.example.events
 
-import org.example.fields.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 
+import java.time.LocalDateTime
 import scala.collection.mutable
 
 class CardSearchTest extends AnyFunSuite {
@@ -21,9 +21,9 @@ class CardSearchTest extends AnyFunSuite {
     val cs = CardSearch.parse(lines)
 
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isInstanceOf[Option[Int]])
     assert(cs.id.contains(1125421))
     assert(cs.query.isInstanceOf[String])
@@ -93,9 +93,9 @@ class CardSearchTest extends AnyFunSuite {
     val cs = CardSearch.parse(lines)
 
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isInstanceOf[Option[Int]])
     assert(cs.id.contains(1125421))
     assert(cs.query.isInstanceOf[String])
@@ -116,9 +116,9 @@ class CardSearchTest extends AnyFunSuite {
 
     val cs = CardSearch.parse(lines)
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isInstanceOf[Option[Int]])
     assert(cs.id.contains(1125421))
     assert(cs.query.isEmpty)
@@ -140,9 +140,9 @@ class CardSearchTest extends AnyFunSuite {
     val cs = CardSearch.parse(lines)
 
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isEmpty)
     assert(cs.query.isInstanceOf[String])
     assert(cs.query == "$134 оквэды")
@@ -164,9 +164,9 @@ class CardSearchTest extends AnyFunSuite {
     val cs = CardSearch.parse(lines)
 
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isInstanceOf[Option[Int]])
     assert(cs.id.contains(1125421))
     assert(cs.query.isInstanceOf[String])
@@ -189,9 +189,9 @@ class CardSearchTest extends AnyFunSuite {
     val cs = CardSearch.parse(lines)
 
     assert(cs.isInstanceOf[CardSearch])
-    assert(cs.date.isInstanceOf[Option[DateTime]])
-    assert(cs.date.get.date == "16.05.2020")
-    assert(cs.date.get.time == "00:26:28")
+    assert(cs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${cs.date.get.toLocalDate}" == "2020-05-16")
+    assert(s"${cs.date.get.toLocalTime}" == "00:26:28")
     assert(cs.id.isInstanceOf[Option[Int]])
     assert(cs.id.contains(1125421))
     assert(cs.query.isInstanceOf[String])

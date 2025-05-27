@@ -1,11 +1,13 @@
 package org.example.events
 
-import org.example.fields.DateTime
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import scala.collection.mutable
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class QuickSearch(
-    date: Option[DateTime],
+    date: Option[LocalDateTime],
     id: Option[Int],
     query: String,
     docIds: List[String],
@@ -20,7 +22,26 @@ object QuickSearch {
     val line = lines.next().split("\\s+", 3).tail
     val nextLine = lines.next().split("\\s+")
 
-    val date = DateTime.parse(line(0))
+    val datePart = line(0)
+
+    val date = Try(
+      LocalDateTime
+        .parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"))
+    ) match {
+      case Success(date) =>
+        Some(date)
+      case Failure(e) =>
+        Try(
+          LocalDateTime.parse(
+            datePart.split("_").slice(1, 5).mkString("_"),
+            DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US)
+          )
+        ) match {
+          case Success(date) =>
+            Some(date)
+          case Failure(e) => None
+        }
+    }
 
     val query =
       if (line.tail(0).startsWith("{")) line.tail.mkString(" ")

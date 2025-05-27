@@ -2,34 +2,40 @@ package org.example.tasks
 
 import org.apache.spark.rdd.RDD
 import org.example.events.Session
-import java.nio.file.{Files, Paths}
+
 import java.io.PrintWriter
+import java.nio.file.Paths
 
 object Task2 {
 
-  def execute(
+  def run(sessions: RDD[Session], path: String, DELIMITER: String): Unit = {
+    saveResults(execute(sessions), path, DELIMITER)
+  }
+
+  private def execute(
       sessions: RDD[Session]
-  ): RDD[(String, String, Int)] = {
+  ): RDD[(java.time.LocalDate, String, Int)] = {
     sessions
       .flatMap { session =>
         session.quickSearches.flatMap { qs =>
           qs.docOpens
+            .filter(docOpen => docOpen.date.nonEmpty)
             .map { docOpen =>
-              ((docOpen.date.get.date, docOpen.docId), 1)
+              ((docOpen.date.get.toLocalDate, docOpen.docId), 1)
             }
         }
       }
       .reduceByKey(_ + _)
       .map { case ((date, docId), count) => (date, docId.get, count) }
+
   }
 
-  def saveResults(
-      results: RDD[(String, String, Int)],
+  private def saveResults(
+      results: RDD[(java.time.LocalDate, String, Int)],
       path: String,
       DELIMITER: String
   ): Unit = {
-    val outputPath = Paths.get(path)
-    val writer = new PrintWriter(Files.newBufferedWriter(outputPath))
+    val writer = new PrintWriter(s"$path/task2.csv")
 
     try {
       writer.println(Array("date", "docId", "count").mkString(DELIMITER))

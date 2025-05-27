@@ -1,11 +1,13 @@
 package org.example.events
 
-import org.example.fields.DateTime
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import scala.collection.mutable
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class CardSearch(
-    date: Option[DateTime],
+    date: Option[LocalDateTime],
     id: Option[Int],
     query: String,
     docIds: List[String],
@@ -33,7 +35,27 @@ object CardSearch {
     val beforeEnd = parts(0).trim.split("\\s+").tail
     val afterEnd = parts(1).trim.split("\\s+")
 
-    val date = DateTime.parse(beforeEnd(0))
+    val datePart = beforeEnd(0)
+
+    val date = Try(
+      LocalDateTime
+        .parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"))
+    ) match {
+      case Success(date) =>
+        Some(date)
+      case Failure(e) =>
+        Try(
+          LocalDateTime.parse(
+            datePart.split("_").slice(1, 5).mkString("_"),
+            DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US)
+          )
+        ) match {
+          case Success(date) =>
+            Some(date)
+          case Failure(e) => None
+        }
+    }
+
     val query =
       if (date.isEmpty) beforeEnd.mkString(" ")
       else beforeEnd.tail.mkString(" ")

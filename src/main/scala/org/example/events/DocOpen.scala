@@ -1,10 +1,12 @@
 package org.example.events
 
-import org.example.fields.DateTime
-import scala.util.Try
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import scala.util.{Failure, Success, Try}
 
 case class DocOpen(
-    date: Option[DateTime],
+    date: Option[LocalDateTime],
     id: Option[Int],
     docId: Option[String]
 )
@@ -15,7 +17,26 @@ object DocOpen {
   ): DocOpen = {
     val content = lines.next()
     val parts = content.split("\\s+").tail
-    val date = DateTime.parse(parts(0))
+    val datePart = parts(0)
+
+    val date = Try(
+      LocalDateTime
+        .parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"))
+    ) match {
+      case Success(date) =>
+        Some(date)
+      case Failure(e) =>
+        Try(
+          LocalDateTime.parse(
+            datePart.split("_").slice(1, 5).mkString("_"),
+            DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US)
+          )
+        ) match {
+          case Success(date) =>
+            Some(date)
+          case Failure(e) => None
+        }
+    }
 
     val id =
       if (date.isEmpty && parts(0).matches("^[0-9].*"))

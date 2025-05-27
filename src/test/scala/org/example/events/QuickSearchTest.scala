@@ -1,8 +1,8 @@
 package org.example.events
 
-import org.example.fields.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 
+import java.time.LocalDateTime
 import scala.collection.mutable
 
 class QuickSearchTest extends AnyFunSuite {
@@ -18,9 +18,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isInstanceOf[Option[Int]])
     assert(qs.id.contains(187920943))
     assert(qs.query.isInstanceOf[String])
@@ -80,9 +80,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isInstanceOf[Option[Int]])
     assert(qs.id.contains(187920943))
     assert(qs.query.isInstanceOf[String])
@@ -102,9 +102,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isInstanceOf[Option[Int]])
     assert(qs.id.contains(187920943))
     assert(qs.query.isEmpty)
@@ -123,9 +123,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isEmpty)
     assert(qs.query.isInstanceOf[String])
     assert(qs.query == "организация осуществления уплаты")
@@ -144,9 +144,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isInstanceOf[Option[Int]])
     assert(qs.id.contains(187920943))
     assert(qs.query.isInstanceOf[String])
@@ -166,9 +166,9 @@ class QuickSearchTest extends AnyFunSuite {
     val qs = QuickSearch.parse(lines)
 
     assert(qs.isInstanceOf[QuickSearch])
-    assert(qs.date.isInstanceOf[Option[DateTime]])
-    assert(qs.date.get.date == "08.11.2020")
-    assert(qs.date.get.time == "12:30:36")
+    assert(qs.date.isInstanceOf[Option[LocalDateTime]])
+    assert(s"${qs.date.get.toLocalDate}" == "2020-11-08")
+    assert(s"${qs.date.get.toLocalTime}" == "12:30:36")
     assert(qs.id.isInstanceOf[Option[Int]])
     assert(qs.id.contains(187920943))
     assert(qs.query.isInstanceOf[String])

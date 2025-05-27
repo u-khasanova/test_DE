@@ -4,7 +4,7 @@ import org.example.events.{DocOpen, Session}
 
 import scala.collection.mutable
 
-object MapDocOpens {
+object DocOpenMapper {
 
   def mapDocOpens(session: Session): Session = {
     val (quickSearchesWithOpens, remainingDocOpens) =

@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.CollectionAccumulator
 import org.example.events.Session
-import org.example.processors.ProcessRawData
+import org.example.processors.RawDataProcessor
 import org.example.tasks.{Task1, Task2}
 
 import java.io.{File, FileInputStream, PrintWriter}
@@ -15,17 +15,18 @@ object Main {
   case class ParseError(
       filePath: String,
       line: String,
+      methodName: String,
       errorType: String,
       errorMessage: String
   ) {
     def toLogString: String = {
-      s"$errorType in $filePath: $errorMessage" +
+      s"$errorType in $filePath using $methodName: $errorMessage" +
         (if (line.nonEmpty) s"\nProblem line: $line" else "")
     }
   }
 
   private val inputPath = "src/main/resources/data"
-  private val outputPath = "output/task2.csv"
+  private val outputPath = "output"
   private val DELIMITER = ","
   private val targetDocId = "ACC_45616"
 
@@ -42,13 +43,8 @@ object Main {
       val sessions =
         processRawData(spark, errorAccumulator, recoverId, recoverEmptyDate)
 
-      val task1 = Task1.execute(sessions, targetDocId)
-      println(
-        s"\nDocument ${task1.targetDocId} was searched in cards ${task1.searchCount} times"
-      )
-
-      val task2 = Task2.execute(sessions)
-      Task2.saveResults(task2, outputPath, DELIMITER)
+      Task1.run(sessions, targetDocId, outputPath)
+      Task2.run(sessions, outputPath, DELIMITER)
 
       val writer = new PrintWriter("logs/errors.log")
       try {
@@ -98,7 +94,7 @@ object Main {
     val parsed = spark.sparkContext
       .wholeTextFiles(inputPath)
       .flatMap { case (filePath, content) =>
-        ProcessRawData
+        RawDataProcessor
           .process(
             content,
             filePath,
@@ -106,9 +102,7 @@ object Main {
             recoverId,
             processEmptyDate
           )
-          .map(session => session)
       }
-    parsed.count()
     parsed
   }
 }
