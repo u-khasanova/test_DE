@@ -1,7 +1,6 @@
 package org.example.processors
 
-import org.apache.spark.util.CollectionAccumulator
-import org.example.Main.ParseError
+import org.example.errorProcessors.ErrorAccumulator
 import org.example.events.Session
 
 import scala.collection.mutable
@@ -14,13 +13,14 @@ object RawDataProcessor {
       var currentSession: SessionBuilder,
       sessions: mutable.ListBuffer[SessionBuilder],
       recoverId: Boolean,
-      recoverEmptyDate: Boolean
+      recoverEmptyDate: Boolean,
+      errorAccumulator: ErrorAccumulator
   )
 
   def process(
       content: String,
       filePath: String,
-      errorAccumulator: CollectionAccumulator[String],
+      errorAccumulator: ErrorAccumulator,
       recoverId: Boolean,
       recoverEmptyDate: Boolean
   ): Iterator[Session] = {
@@ -36,22 +36,11 @@ object RawDataProcessor {
       currentSession = SessionBuilder(filePath),
       sessions = mutable.ListBuffer.empty,
       recoverId = recoverId,
-      recoverEmptyDate = recoverEmptyDate
+      recoverEmptyDate = recoverEmptyDate,
+      errorAccumulator = errorAccumulator
     )
 
-    try {
-      Session.parse(context)
-    } catch {
-      case e: Exception =>
-        val err = ParseError(
-          filePath,
-          context.iterator.head,
-          s"${e.getStackTrace.head}",
-          e.getClass.getSimpleName,
-          e.getMessage
-        )
-        errorAccumulator.add(err.toLogString)
-    }
+    Session.parse(context)
     context.sessions.iterator.flatMap(_.build(context))
   }
 }

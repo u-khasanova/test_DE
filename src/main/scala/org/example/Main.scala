@@ -3,7 +3,7 @@ package org.example
 import org.apache.logging.log4j.core.config.{ConfigurationSource, Configurator}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.util.CollectionAccumulator
+import org.example.errorProcessors.ErrorAccumulator
 import org.example.events.Session
 import org.example.processors.RawDataProcessor
 import org.example.tasks.{Task1, Task2}
@@ -12,46 +12,33 @@ import java.io.{File, FileInputStream, PrintWriter}
 
 object Main {
 
-  case class ParseError(
-      filePath: String,
-      line: String,
-      methodName: String,
-      errorType: String,
-      errorMessage: String
-  ) {
-    def toLogString: String = {
-      s"$errorType in $filePath using $methodName: $errorMessage" +
-        (if (line.nonEmpty) s"\nProblem line: $line" else "")
-    }
-  }
-
   private val inputPath = "src/main/resources/data"
-  private val outputPath = "output"
-  private val DELIMITER = ","
-  private val targetDocId = "ACC_45616"
-
-  private val recoverId = true
-  private val recoverEmptyDate = true
+  private val recoverId = false
+  private val recoverEmptyDate = false
 
   def main(args: Array[String]): Unit = {
     initLogger()
     val spark = initSparkSession()
-    val errorAccumulator =
-      spark.sparkContext.collectionAccumulator[String]("parseErrors")
+
+    val errorAccumulator = new ErrorAccumulator
+    spark.sparkContext.register(errorAccumulator, "parseErrors")
 
     try {
       val sessions =
         processRawData(spark, errorAccumulator, recoverId, recoverEmptyDate)
 
-      Task1.run(sessions, targetDocId, outputPath)
-      Task2.run(sessions, outputPath, DELIMITER)
+      Task1.run(sessions)
+      Task2.run(sessions)
 
       val writer = new PrintWriter("logs/errors.log")
       try {
-        errorAccumulator.value.forEach(writer.println)
+        for (((method, errorType), count) <- errorAccumulator.value) {
+          writer.println(s"$errorType in $method: $count time(s)")
+        }
       } finally {
         writer.close()
       }
+
     } finally {
       spark.stop()
     }
@@ -86,7 +73,7 @@ object Main {
 
   private def processRawData(
       spark: SparkSession,
-      errorAccumulator: CollectionAccumulator[String],
+      errorAccumulator: ErrorAccumulator,
       recoverId: Boolean,
       processEmptyDate: Boolean
   ): RDD[Session] = {

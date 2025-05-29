@@ -82,7 +82,7 @@ class CardSearchTest extends AnyFunSuite {
   test("handle date secondary format") {
     val lines = mutable
       .ArrayBuffer(
-        "CARD_SEARCH_START Wed,_16_May_2020_00:26:28_+0300",
+        "CARD_SEARCH_START Sat,_16_May_2020_00:26:28_+0300",
         "$134 оквэды",
         "CARD_SEARCH_END",
         "1125421 RZR_144138 RZR_183391"

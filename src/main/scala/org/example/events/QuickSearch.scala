@@ -1,10 +1,12 @@
 package org.example.events
 
+import org.example.processors.RawDataProcessor.ParseContext
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 case class QuickSearch(
     date: Option[LocalDateTime],
@@ -17,31 +19,31 @@ case class QuickSearch(
 object QuickSearch {
 
   def parse(
-      lines: BufferedIterator[String]
-  ): QuickSearch = {
-    val line = lines.next().split("\\s+", 3).tail
-    val nextLine = lines.next().split("\\s+")
+      context: ParseContext
+  ): Unit = {
+    val line = context.iterator
+      .next()
+      .split("\\s+", 3)
+      .tail
+
+    val nextLine = context.iterator
+      .next()
+      .split("\\s+")
 
     val datePart = line(0)
 
-    val date = Try(
-      LocalDateTime
-        .parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"))
-    ) match {
-      case Success(date) =>
-        Some(date)
-      case Failure(e) =>
-        Try(
-          LocalDateTime.parse(
-            datePart.split("_").slice(1, 5).mkString("_"),
-            DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US)
-          )
-        ) match {
-          case Success(date) =>
-            Some(date)
-          case Failure(e) => None
-        }
-    }
+    val dateFormats = Array(
+      DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
+      DateTimeFormatter.ofPattern("EEE,_dd_MMM_yyyy_HH:mm:ss_XXXX", Locale.US)
+    )
+
+    val date = dateFormats
+      .map { formatter =>
+        Try(LocalDateTime.parse(datePart, formatter))
+      }
+      .collectFirst { case Success(date) =>
+        date
+      }
 
     val query =
       if (line.tail(0).startsWith("{")) line.tail.mkString(" ")
@@ -51,6 +53,11 @@ object QuickSearch {
 
     val docIds = if (id.isEmpty) nextLine.toList else nextLine.tail.toList
 
-    QuickSearch(date, id, query.slice(1, query.length - 1), docIds)
+    context.currentSession.quickSearches += QuickSearch(
+      date,
+      id,
+      query.slice(1, query.length - 1),
+      docIds
+    )
   }
 }

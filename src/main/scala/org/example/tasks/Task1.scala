@@ -11,8 +11,8 @@ object Task1 {
 
   def run(
       sessions: RDD[Session],
-      targetDocId: String,
-      outputPath: String
+      targetDocId: String = "ACC_45616",
+      outputPath: String = "output"
   ): Unit = {
     val result = execute(sessions, targetDocId)
     val writer = new PrintWriter(s"$outputPath/task1.log")

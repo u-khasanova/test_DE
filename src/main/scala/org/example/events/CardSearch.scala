@@ -1,10 +1,12 @@
 package org.example.events
 
+import org.example.processors.RawDataProcessor.ParseContext
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 case class CardSearch(
     date: Option[LocalDateTime],
@@ -17,16 +19,16 @@ case class CardSearch(
 object CardSearch {
 
   def parse(
-      lines: BufferedIterator[String]
-  ): CardSearch = {
-    val content = new mutable.StringBuilder(lines.next().trim)
+      context: ParseContext
+  ): Unit = {
+    val content = new mutable.StringBuilder(context.iterator.next().trim)
     var foundEnd = false
 
-    while (lines.hasNext && !foundEnd) {
-      val nextLine = lines.next()
+    while (context.iterator.hasNext && !foundEnd) {
+      val nextLine = context.iterator.next()
       content.append(s" $nextLine")
       foundEnd = nextLine.trim.startsWith("CARD_SEARCH_END")
-      if (foundEnd) content.append(s" ${lines.next()}")
+      if (foundEnd) content.append(s" ${context.iterator.next()}")
     }
 
     val fullContent = content.toString()
@@ -37,24 +39,18 @@ object CardSearch {
 
     val datePart = beforeEnd(0)
 
-    val date = Try(
-      LocalDateTime
-        .parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"))
-    ) match {
-      case Success(date) =>
-        Some(date)
-      case Failure(e) =>
-        Try(
-          LocalDateTime.parse(
-            datePart.split("_").slice(1, 5).mkString("_"),
-            DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH:mm:ss", Locale.US)
-          )
-        ) match {
-          case Success(date) =>
-            Some(date)
-          case Failure(e) => None
-        }
-    }
+    val dateFormats = Array(
+      DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
+      DateTimeFormatter.ofPattern("EEE,_dd_MMM_yyyy_HH:mm:ss_XXXX", Locale.US)
+    )
+
+    val date = dateFormats
+      .map { formatter =>
+        Try(LocalDateTime.parse(datePart, formatter))
+      }
+      .collectFirst { case Success(date) =>
+        date
+      }
 
     val query =
       if (date.isEmpty) beforeEnd.mkString(" ")
@@ -62,6 +58,6 @@ object CardSearch {
     val id = Try(afterEnd.head.toInt.abs).toOption
     val docIds = if (id.isEmpty) afterEnd.toList else afterEnd.tail.toList
 
-    CardSearch(date, id, query, docIds)
+    context.currentSession.cardSearches += CardSearch(date, id, query, docIds)
   }
 }

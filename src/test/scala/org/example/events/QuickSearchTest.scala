@@ -72,7 +72,7 @@ class QuickSearchTest extends AnyFunSuite {
   test("handle date secondary format") {
     val lines = mutable
       .ArrayBuffer(
-        "QS Wed,_08_Nov_2020_12:30:36_+0300 {организация осуществления уплаты}",
+        "QS Sun,_08_Nov_2020_12:30:36_+0300 {организация осуществления уплаты}",
         "187920943 DOC1 DOC2"
       )
       .iterator
