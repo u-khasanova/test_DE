@@ -34,13 +34,13 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     val recovered = EmptyIdFixer.recover(session)
 
     assert(
-      recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
+      recovered.docOpens.find(_.docId.contains("doc1")).get.searchId.contains(123)
     )
     assert(
-      recovered.docOpens.find(_.docId.contains("doc2")).get.id.contains(123)
+      recovered.docOpens.find(_.docId.contains("doc2")).get.searchId.contains(123)
     )
     assert(
-      recovered.docOpens.find(_.docId.contains("doc3")).get.id.isEmpty
+      recovered.docOpens.find(_.docId.contains("doc3")).get.searchId.isEmpty
     )
   }
 
@@ -65,13 +65,13 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     val recovered = EmptyIdFixer.recover(session)
 
     assert(
-      recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
+      recovered.docOpens.find(_.docId.contains("doc1")).get.searchId.contains(123)
     )
     assert(
-      recovered.docOpens.find(_.docId.contains("doc2")).get.id.contains(123)
+      recovered.docOpens.find(_.docId.contains("doc2")).get.searchId.contains(123)
     )
     assert(
-      recovered.docOpens.find(_.docId.contains("doc3")).get.id.contains(456)
+      recovered.docOpens.find(_.docId.contains("doc3")).get.searchId.contains(456)
     )
   }
 
@@ -93,7 +93,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
 
     val recovered = EmptyIdFixer.recover(session)
     assert(
-      recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
+      recovered.docOpens.find(_.docId.contains("doc1")).get.searchId.isEmpty
     )
   }
 
@@ -115,7 +115,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
 
     val recovered = EmptyIdFixer.recover(session)
     assert(
-      recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
+      recovered.docOpens.find(_.docId.contains("doc1")).get.searchId.isEmpty
     )
   }
 
@@ -139,7 +139,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     )
 
     val recovered = EmptyIdFixer.recover(session)
-    assert(recovered.quickSearches.head.id.contains(123))
+    assert(recovered.quickSearches.head.searchId.contains(123))
   }
 
   test("recover CardSearch id from DocOpens") {
@@ -162,7 +162,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     )
 
     val recovered = EmptyIdFixer.recover(session)
-    assert(recovered.cardSearches.head.id.contains(456))
+    assert(recovered.cardSearches.head.searchId.contains(456))
   }
 
   test("don't recover ambiguous CardSearch or QuickSearch id") {
@@ -192,10 +192,10 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     )
 
     val recovered = EmptyIdFixer.recover(session)
-    assert(recovered.quickSearches.head.id.isEmpty)
-    assert(recovered.cardSearches.head.id.isEmpty)
+    assert(recovered.quickSearches.head.searchId.isEmpty)
+    assert(recovered.cardSearches.head.searchId.isEmpty)
     assert(
-      recovered.docOpens.find(_.docId.contains("doc2")).get.id.contains(456)
+      recovered.docOpens.find(_.docId.contains("doc2")).get.searchId.contains(456)
     )
   }
 
@@ -228,8 +228,8 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     )
 
     val recovered = EmptyIdFixer.recover(session)
-    assert(recovered.quickSearches.head.id.contains(123))
-    assert(recovered.cardSearches.head.id.contains(456))
-    assert(recovered.docOpens.head.id.isEmpty)
+    assert(recovered.quickSearches.head.searchId.contains(123))
+    assert(recovered.cardSearches.head.searchId.contains(456))
+    assert(recovered.docOpens.head.searchId.isEmpty)
   }
 }

@@ -19,7 +19,7 @@ object Task1 {
     val writer = new PrintWriter(s"$outputPath/task1.log")
     try {
       writer.println(
-        s"\nDocument ${targetDocId} was searched in cards ${result} times"
+        s"\nDocument $targetDocId was searched in cards $result times"
       )
     } finally {
       writer.close()

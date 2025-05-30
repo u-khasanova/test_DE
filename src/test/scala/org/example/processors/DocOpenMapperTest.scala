@@ -37,17 +37,17 @@ class DocOpenMapperTest extends AnyFunSuite {
 
     assert(
       result.quickSearches.exists(
-        _.id.contains(1) &&
+        _.searchId.contains(1) &&
           result.quickSearches
-            .find(_.id.contains(1))
+            .find(_.searchId.contains(1))
             .get
             .docOpens
             .contains(doc1)
       )
     )
     assert(
-      result.quickSearches.exists(_.id.contains(2)) &&
-        result.quickSearches.find(_.id.contains(2)).get.docOpens.contains(doc2)
+      result.quickSearches.exists(_.searchId.contains(2)) &&
+        result.quickSearches.find(_.searchId.contains(2)).get.docOpens.contains(doc2)
     )
     assert(result.docOpens.contains(doc3))
   }
