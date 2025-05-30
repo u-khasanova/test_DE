@@ -28,9 +28,9 @@ object DocOpenMapper {
       .toMap
 
     docOpens.foreach { docOpen =>
-      docOpen.searchId.foreach { id =>
+      docOpen.searchId.foreach { searchId =>
         searchMap
-          .get(id)
+          .get(searchId)
           .foreach(_.foreach { search =>
             if (!search.docOpens.contains(docOpen)) {
               search.docOpens += docOpen
