@@ -1,16 +1,16 @@
 package org.example.events
 
+import org.example.errorProcessors.EmptyFieldLogger
+import org.example.processors.DateTimeProcessor
 import org.example.processors.RawDataProcessor.ParseContext
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import scala.collection.mutable
-import scala.util.{Success, Try}
+import scala.util.Try
 
 case class QuickSearch(
-    date: Option[LocalDateTime],
-    id: Option[Int],
+    var date: Option[LocalDateTime],
+    var searchId: Option[Int],
     query: String,
     docIds: List[String],
     docOpens: mutable.ListBuffer[DocOpen] = mutable.ListBuffer.empty
@@ -32,31 +32,27 @@ object QuickSearch {
 
     val datePart = line(0)
 
-    val dateFormats = Array(
-      DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
-      DateTimeFormatter.ofPattern("EEE,_dd_MMM_yyyy_HH:mm:ss_XXXX", Locale.US)
-    )
+    val date = DateTimeProcessor.process(datePart)
 
-    val date = dateFormats
-      .map { formatter =>
-        Try(LocalDateTime.parse(datePart, formatter))
-      }
-      .collectFirst { case Success(date) =>
-        date
-      }
-
-    val query =
+    val queryRaw =
       if (line.tail(0).startsWith("{")) line.tail.mkString(" ")
       else line.mkString(" ")
 
-    val id = Try(nextLine(0).toInt.abs).toOption
+    val query = queryRaw.slice(1, queryRaw.length - 1)
 
-    val docIds = if (id.isEmpty) nextLine.toList else nextLine.tail.toList
+    val searchId = Try(nextLine(0).toInt.abs).toOption
+
+    val docIds = if (searchId.isEmpty) nextLine.toList else nextLine.tail.toList
+
+    Seq(("date", date), ("searchId", searchId))
+      .foreach { case (name, value) =>
+        EmptyFieldLogger.log(context, name, value, line.mkString(" "), "QuickSearch.parse")
+      }
 
     context.currentSession.quickSearches += QuickSearch(
       date,
-      id,
-      query.slice(1, query.length - 1),
+      searchId,
+      query,
       docIds
     )
   }

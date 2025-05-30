@@ -1,13 +1,14 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processors.fixers.EmptyIdFixer
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
+class EmptyIdFixerTest extends AnyFunSuite with Matchers {
   private val testDate = Some(
     LocalDateTime.parse(
       "08.11.2020_12:29:47",
@@ -30,7 +31,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen1, docOpen2, docOpen3)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
 
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
@@ -61,7 +62,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen1, docOpen2, docOpen3)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
 
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.contains(123)
@@ -90,7 +91,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
     )
@@ -112,7 +113,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(
       recovered.docOpens.find(_.docId.contains("doc1")).get.id.isEmpty
     )
@@ -137,7 +138,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(recovered.quickSearches.head.id.contains(123))
   }
 
@@ -160,7 +161,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(recovered.cardSearches.head.id.contains(456))
   }
 
@@ -190,7 +191,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(recovered.quickSearches.head.id.isEmpty)
     assert(recovered.cardSearches.head.id.isEmpty)
     assert(
@@ -208,7 +209,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
         List.empty,
         List.empty
       )
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     recovered shouldBe session
   }
 
@@ -226,7 +227,7 @@ class EmptyIdProcessorTest extends AnyFunSuite with Matchers {
       List(docOpen)
     )
 
-    val recovered = EmptyIdProcessor.recover(session)
+    val recovered = EmptyIdFixer.recover(session)
     assert(recovered.quickSearches.head.id.contains(123))
     assert(recovered.cardSearches.head.id.contains(456))
     assert(recovered.docOpens.head.id.isEmpty)

@@ -1,12 +1,13 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processors.fixers.EmptyDateFixer
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class EmptyDateProcessorTest extends AnyFunSuite {
+class EmptyDateFixerTest extends AnyFunSuite {
   private val testDate = LocalDateTime.parse(
     "01.09.2020_06:44:35",
     DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss")
@@ -34,7 +35,7 @@ class EmptyDateProcessorTest extends AnyFunSuite {
       )
     )
 
-    val recovered = EmptyDateProcessor.recover(session)
+    val recovered = EmptyDateFixer.recover(session)
 
     assert(recovered.quickSearches.head.date.contains(testDate))
     assert(recovered.quickSearches(1).date.contains(testDate2))

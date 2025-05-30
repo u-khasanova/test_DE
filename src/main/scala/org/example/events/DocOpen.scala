@@ -1,15 +1,15 @@
 package org.example.events
 
+import org.example.errorProcessors.EmptyFieldLogger
+import org.example.processors.DateTimeProcessor
 import org.example.processors.RawDataProcessor.ParseContext
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-import scala.util.{Success, Try}
+import scala.util.Try
 
 case class DocOpen(
-    date: Option[LocalDateTime],
-    id: Option[Int],
+    var date: Option[LocalDateTime],
+    var searchId: Option[Int],
     docId: Option[String]
 )
 
@@ -21,20 +21,9 @@ object DocOpen {
     val parts = content.split("\\s+").tail
     val datePart = parts(0)
 
-    val dateFormats = Array(
-      DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
-      DateTimeFormatter.ofPattern("EEE,_dd_MMM_yyyy_HH:mm:ss_XXXX", Locale.US)
-    )
+    val date = DateTimeProcessor.process(datePart)
 
-    val date = dateFormats
-      .map { formatter =>
-        Try(LocalDateTime.parse(datePart, formatter))
-      }
-      .collectFirst { case Success(date) =>
-        date
-      }
-
-    val id =
+    val searchId =
       if (date.isEmpty && parts(0).matches("^[0-9].*"))
         Try(parts(0).toInt.abs).toOption
       else Try(parts(1).toInt.abs).toOption
@@ -42,7 +31,12 @@ object DocOpen {
     val docId =
       if (parts.last.matches("^[0-9].*")) None else Try(parts.last).toOption
 
+    Seq(("date", date), ("searchId", searchId), ("docId", docId))
+      .foreach { case (name, value) =>
+        EmptyFieldLogger.log(context, name, value, content, "DocOpen.parse")
+      }
+
     context.currentSession.docOpens +=
-      DocOpen(date, id, docId)
+      DocOpen(date, searchId, docId)
   }
 }

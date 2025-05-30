@@ -9,23 +9,24 @@ case class Task1(targetDocId: String, searchCount: Int)
 
 object Task1 {
 
+  private val targetDocId = "ACC_45616"
+  private val outputPath = "output"
+
   def run(
-      sessions: RDD[Session],
-      targetDocId: String = "ACC_45616",
-      outputPath: String = "output"
+      sessions: RDD[Session]
   ): Unit = {
-    val result = execute(sessions, targetDocId)
+    val result = countData(sessions, targetDocId)
     val writer = new PrintWriter(s"$outputPath/task1.log")
     try {
       writer.println(
-        s"\nDocument ${result.targetDocId} was searched in cards ${result.searchCount} times"
+        s"\nDocument ${targetDocId} was searched in cards ${result} times"
       )
     } finally {
       writer.close()
     }
   }
 
-  def execute(sessions: RDD[Session], targetDocId: String): Task1 = {
+  private def countData(sessions: RDD[Session], targetDocId: String): Int = {
     val pattern = targetDocId
       .toLowerCase()
       .replace("a", "[аa]")
@@ -43,6 +44,6 @@ object Task1 {
       .count()
       .toInt
 
-    Task1(targetDocId, searchCount)
+    searchCount
   }
 }

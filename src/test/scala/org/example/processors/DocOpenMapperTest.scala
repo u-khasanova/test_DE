@@ -1,6 +1,7 @@
 package org.example.processors
 
 import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processors.fixers.DocOpenMapper
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.LocalDateTime

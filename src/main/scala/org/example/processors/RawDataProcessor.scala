@@ -1,9 +1,9 @@
 package org.example.processors
 
-import org.example.errorProcessors.ErrorAccumulator
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+import org.example.errorProcessors.Errors
 import org.example.events.Session
-
-import scala.collection.mutable
 
 object RawDataProcessor {
 
@@ -11,36 +11,33 @@ object RawDataProcessor {
       filePath: String,
       iterator: BufferedIterator[String],
       var currentSession: SessionBuilder,
-      sessions: mutable.ListBuffer[SessionBuilder],
-      recoverId: Boolean,
-      recoverEmptyDate: Boolean,
-      errorAccumulator: ErrorAccumulator
+      errorAccumulator: Errors
   )
 
   def process(
-      content: String,
+      spark: SparkSession,
       filePath: String,
-      errorAccumulator: ErrorAccumulator,
-      recoverId: Boolean,
-      recoverEmptyDate: Boolean
-  ): Iterator[Session] = {
+      errorAccumulator: Errors
+  ): RDD[Session] = {
 
-    val lines = content
-      .split("\n")
-      .iterator
-      .buffered
+    val parsed = spark.sparkContext
+      .wholeTextFiles(filePath)
+      .flatMap { case (filePath, content) =>
+        val lines = content
+          .split("\n")
+          .iterator
+          .buffered
 
-    val context = ParseContext(
-      filePath = filePath,
-      iterator = lines,
-      currentSession = SessionBuilder(filePath),
-      sessions = mutable.ListBuffer.empty,
-      recoverId = recoverId,
-      recoverEmptyDate = recoverEmptyDate,
-      errorAccumulator = errorAccumulator
-    )
+        val context = ParseContext(
+          filePath = filePath,
+          iterator = lines,
+          currentSession = SessionBuilder(filePath),
+          errorAccumulator = errorAccumulator
+        )
 
-    Session.parse(context)
-    context.sessions.iterator.flatMap(_.build(context))
+        Session.parse(context)
+        context.currentSession.build()
+      }
+    parsed
   }
 }

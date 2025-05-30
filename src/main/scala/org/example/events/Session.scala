@@ -1,21 +1,18 @@
 package org.example.events
 
-import org.example.errorProcessors.{ErrorAccumulator, ParseError}
+import org.example.errorProcessors.ParseError
 import org.example.processors.RawDataProcessor.ParseContext
-import org.example.processors.SessionBuilder
+import org.example.processors.{DateTimeProcessor, SessionBuilder}
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-import scala.util.{Success, Try}
 
 case class Session(
     file: String,
     startDate: Option[LocalDateTime],
     endDate: Option[LocalDateTime],
-    quickSearches: List[QuickSearch],
-    cardSearches: List[CardSearch],
-    docOpens: List[DocOpen]
+    var quickSearches: List[QuickSearch],
+    var cardSearches: List[CardSearch],
+    var docOpens: List[DocOpen]
 )
 
 object Session {
@@ -48,7 +45,6 @@ object Session {
 
           case _ if lineStart == "SESSION_END" =>
             context.currentSession.endDate = parseDateTime(context.iterator)
-            context.sessions += context.currentSession
             checkTrailingLines(context)
 
           case _ => if (context.iterator.hasNext) context.iterator.next()
@@ -63,8 +59,7 @@ object Session {
           e.getClass.getSimpleName,
           e.getMessage
         )
-        context.errorAccumulator.asInstanceOf[ErrorAccumulator].add(err)
-
+        context.errorAccumulator.add(err)
     }
     context
   }
@@ -80,18 +75,7 @@ object Session {
       .lift(1)
       .getOrElse("")
 
-    val dateFormats = Array(
-      DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
-      DateTimeFormatter.ofPattern("EEE,_dd_MMM_yyyy_HH:mm:ss_XXXX", Locale.US)
-    )
-
-    dateFormats
-      .map { formatter =>
-        Try(LocalDateTime.parse(datePart, formatter))
-      }
-      .collectFirst { case Success(date) =>
-        date
-      }
+    DateTimeProcessor.process(datePart)
   }
 
   private def checkTrailingLines(context: ParseContext): Unit = {

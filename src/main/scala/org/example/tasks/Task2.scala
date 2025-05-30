@@ -7,26 +7,27 @@ import java.io.PrintWriter
 
 object Task2 {
 
+  private val path = "output"
+  private val delimiter = ","
+
   def run(
-      sessions: RDD[Session],
-      path: String = "output",
-      delimiter: String = ","
+      sessions: RDD[Session]
   ): Unit = {
-    saveResults(execute(sessions), path, delimiter)
+    saveResults(countData(sessions), path, delimiter)
   }
 
-  private def execute(
+  private def countData(
       sessions: RDD[Session]
   ): RDD[(String, String, Int)] = {
     sessions
       .flatMap { session =>
         session.quickSearches.flatMap { qs =>
           qs.docOpens.map { docOpen =>
-            val dateKey = docOpen.date
+            val date = docOpen.date
               .map(_.toLocalDate.toString)
               .getOrElse("empty date")
 
-            ((dateKey, docOpen.docId), 1)
+            ((date, docOpen.docId), 1)
           }
         }
       }
