@@ -1,4 +1,4 @@
-package org.example.errorProcessors
+package org.example.processor.utils
 
 case class ParseError(
     filePath: String,

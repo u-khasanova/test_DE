@@ -1,8 +1,7 @@
-package org.example.events
+package org.example.processor.events
 
-import org.example.errorProcessors.EmptyFieldLogger
-import org.example.processors.DateTimeProcessor
-import org.example.processors.RawDataProcessor.ParseContext
+import org.example.processor.DateTimeParser
+import org.example.processor.utils.ParseContext
 
 import java.time.LocalDateTime
 import scala.collection.mutable
@@ -21,6 +20,7 @@ object QuickSearch {
   def parse(
       context: ParseContext
   ): Unit = {
+
     val line = context.iterator
       .next()
       .split("\\s+", 3)
@@ -30,24 +30,23 @@ object QuickSearch {
       .next()
       .split("\\s+")
 
-    val datePart = line(0)
-
-    val date = DateTimeProcessor.process(datePart)
+    val date = DateTimeParser.process(context, line(0))
 
     val queryRaw =
       if (line.tail(0).startsWith("{")) line.tail.mkString(" ")
       else line.mkString(" ")
 
-    val query = queryRaw.slice(1, queryRaw.length - 1)
+    val query = queryRaw.substring(1, queryRaw.length - 1)
+
+    if (query.isEmpty) context.addWarning("QuickSearch.parse", "query")
 
     val searchId = Try(nextLine(0).toInt.abs).toOption
 
+    if (searchId.isEmpty) context.addWarning("QuickSearch.parse", "searchId")
+
     val docIds = if (searchId.isEmpty) nextLine.toList else nextLine.tail.toList
 
-    Seq(("date", date), ("searchId", searchId))
-      .foreach { case (name, value) =>
-        EmptyFieldLogger.log(context, name, value, line.mkString(" "), "QuickSearch.parse")
-      }
+    if (docIds.isEmpty) context.addWarning("QuickSearch.parse", "docIds")
 
     context.currentSession.quickSearches += QuickSearch(
       date,

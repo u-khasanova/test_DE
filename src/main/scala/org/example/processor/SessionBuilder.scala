@@ -1,7 +1,7 @@
-package org.example.processors
+package org.example.processor
 
-import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.processors.fixers.DocOpenMapper
+import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processor.fixers.DocOpenMapper
 
 import java.time.LocalDateTime
 import scala.collection.mutable

@@ -1,6 +1,6 @@
-package org.example.processors.fixers
+package org.example.processor.fixers
 
-import org.example.events.Session
+import org.example.processor.events.Session
 
 object EmptyDateFixer {
 

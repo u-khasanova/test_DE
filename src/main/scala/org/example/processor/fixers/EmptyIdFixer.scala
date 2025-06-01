@@ -1,7 +1,6 @@
-package org.example.processors.fixers
+package org.example.processor.fixers
 
-import org.example.events.Session
-
+import org.example.processor.events.Session
 import scala.collection.mutable
 
 object EmptyIdFixer {
@@ -39,10 +38,7 @@ object EmptyIdFixer {
       if (qs.searchId.isEmpty) {
         qs.docIds
           .find { docId =>
-            docIdToSearches.get(docId) match {
-              case Some(List(None)) => true
-              case _                => false
-            }
+            docIdToSearches.get(docId).contains(List(None))
           }
           .flatMap { docId =>
             session.docOpens.find(_.docId.contains(docId)).flatMap(_.searchId)
@@ -57,10 +53,7 @@ object EmptyIdFixer {
       if (cs.searchId.isEmpty) {
         cs.docIds
           .find { docId =>
-            docIdToSearches.get(docId) match {
-              case Some(List(None)) => true
-              case _                => false
-            }
+            docIdToSearches.get(docId).contains(List(None))
           }
           .flatMap { docId =>
             session.docOpens.find(_.docId.contains(docId)).flatMap(_.searchId)

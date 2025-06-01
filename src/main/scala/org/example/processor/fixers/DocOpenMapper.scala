@@ -1,6 +1,6 @@
-package org.example.processors.fixers
+package org.example.processor.fixers
 
-import org.example.events.{DocOpen, Session}
+import org.example.processor.events.{DocOpen, Session}
 
 import scala.collection.mutable
 import scala.language.reflectiveCalls

@@ -1,5 +1,6 @@
 package org.example.events
 
+import org.example.processor.events.CardSearch
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.LocalDateTime

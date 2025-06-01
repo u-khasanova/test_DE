@@ -1,8 +1,7 @@
-package org.example.events
+package org.example.processor.events
 
-import org.example.errorProcessors.ParseError
-import org.example.processors.RawDataProcessor.ParseContext
-import org.example.processors.{DateTimeProcessor, SessionBuilder}
+import org.example.processor.utils.ParseContext
+import org.example.processor.{DateTimeParser, SessionBuilder}
 
 import java.time.LocalDateTime
 
@@ -21,18 +20,16 @@ object Session {
     try {
       while (context.iterator.hasNext) {
 
-        val line = context.iterator.head
-
         val lineStart = context.iterator.head
           .split(" ")(0)
 
-        line match {
+        lineStart match {
 
           case _ if lineStart == "SESSION_START" =>
             if (context.currentSession.endDate.nonEmpty) {
               context.currentSession = SessionBuilder(context.filePath)
             }
-            context.currentSession.startDate = parseDateTime(context.iterator)
+            context.currentSession.startDate = parseDateTime(context)
 
           case _ if lineStart == "QS" =>
             QuickSearch.parse(context)
@@ -44,7 +41,7 @@ object Session {
             DocOpen.parse(context)
 
           case _ if lineStart == "SESSION_END" =>
-            context.currentSession.endDate = parseDateTime(context.iterator)
+            context.currentSession.endDate = parseDateTime(context)
             checkTrailingLines(context)
 
           case _ => if (context.iterator.hasNext) context.iterator.next()
@@ -52,30 +49,23 @@ object Session {
       }
     } catch {
       case e: Exception =>
-        val err = ParseError(
-          context.filePath,
-          context.iterator.head,
-          s"${e.getStackTrace.head}",
-          e.getClass.getSimpleName,
-          e.getMessage
-        )
-        context.errorAccumulator.add(err)
+        context.addError(e)
     }
     context
   }
 
   private def parseDateTime(
-      lines: BufferedIterator[String]
+      context: ParseContext
   ): Option[LocalDateTime] = {
 
-    val line = lines.next()
+    val line = context.iterator.next()
 
     val datePart = line
       .split(" ")
       .lift(1)
       .getOrElse("")
 
-    DateTimeProcessor.process(datePart)
+    DateTimeParser.process(context, datePart)
   }
 
   private def checkTrailingLines(context: ParseContext): Unit = {

@@ -1,23 +1,16 @@
-package org.example.processors
+package org.example.processor
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.example.errorProcessors.Errors
-import org.example.events.Session
+import org.example.processor.events.Session
+import org.example.processor.utils.{ErrorsAccumulator, ParseContext}
 
 object RawDataProcessor {
-
-  case class ParseContext(
-      filePath: String,
-      iterator: BufferedIterator[String],
-      var currentSession: SessionBuilder,
-      errorAccumulator: Errors
-  )
 
   def process(
       spark: SparkSession,
       filePath: String,
-      errorAccumulator: Errors
+      errorAccumulator: ErrorsAccumulator
   ): RDD[Session] = {
 
     val parsed = spark.sparkContext

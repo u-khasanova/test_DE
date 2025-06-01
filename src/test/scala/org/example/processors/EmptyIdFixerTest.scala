@@ -1,7 +1,7 @@
 package org.example.processors
 
-import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.processors.fixers.EmptyIdFixer
+import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processor.fixers.EmptyIdFixer
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

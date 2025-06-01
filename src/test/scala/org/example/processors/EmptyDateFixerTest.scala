@@ -1,7 +1,7 @@
 package org.example.processors
 
-import org.example.events.{CardSearch, DocOpen, QuickSearch, Session}
-import org.example.processors.fixers.EmptyDateFixer
+import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
+import org.example.processor.fixers.EmptyDateFixer
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.LocalDateTime

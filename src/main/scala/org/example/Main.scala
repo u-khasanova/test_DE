@@ -1,9 +1,9 @@
 package org.example
 
-import org.example.errorProcessors.Errors
-import org.example.processors.RawDataProcessor
+import org.example.processor.RawDataProcessor
+import org.example.processor.utils.{ErrorsAccumulator, SparkSessionInitializer}
 import org.example.tasks.{Task1, Task2}
-import org.example.utils.{LoggerInitializer, SparkSessionInitializer}
+import org.example.utils.LoggerInitializer
 
 import java.io.PrintWriter
 
@@ -15,7 +15,7 @@ object Main {
     LoggerInitializer.init()
     val spark = SparkSessionInitializer.init()
 
-    val errorAccumulator = new Errors
+    val errorAccumulator = new ErrorsAccumulator
     spark.sparkContext.register(errorAccumulator, "parseErrors")
 
     try {

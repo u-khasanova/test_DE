@@ -1,7 +1,7 @@
 package org.example.tasks
 
 import org.apache.spark.rdd.RDD
-import org.example.events.Session
+import org.example.processor.events.Session
 
 import java.io.PrintWriter
 
@@ -10,15 +10,11 @@ object Task2 {
   private val path = "output"
   private val delimiter = ","
 
-  def run(
-      sessions: RDD[Session]
-  ): Unit = {
+  def run(sessions: RDD[Session]): Unit = {
     saveResults(countData(sessions), path, delimiter)
   }
 
-  private def countData(
-      sessions: RDD[Session]
-  ): RDD[(String, String, Int)] = {
+  private def countData(sessions: RDD[Session]): RDD[(String, String, Int)] = {
     sessions
       .flatMap { session =>
         session.quickSearches.flatMap { qs =>
@@ -41,6 +37,7 @@ object Task2 {
       path: String,
       delimiter: String
   ): Unit = {
+
     val writer = new PrintWriter(s"$path/task2.csv")
 
     try {
