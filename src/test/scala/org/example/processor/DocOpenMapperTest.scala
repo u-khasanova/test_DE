@@ -1,4 +1,4 @@
-package org.example.processors
+package org.example.processor
 
 import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
 import org.example.processor.fixers.DocOpenMapper
@@ -62,7 +62,7 @@ class DocOpenMapperTest extends AnyFunSuite {
     val doc1 = DocOpen(testDate, Some(1), Some("doc1"))
     val doc3 = DocOpen(testDate, Some(99), Some("doc3"))
     val cs1 =
-      CardSearch(testDate, Some(1), "query", List("doc1"))
+      CardSearch(testDate, Some(1), List(("key", "value")), List("doc1"))
 
     val session = Session(
       "test.txt",
@@ -163,7 +163,7 @@ class DocOpenMapperTest extends AnyFunSuite {
     val qs1 =
       QuickSearch(testDate, Some(1), "query", List("doc1"))
     val cs1 =
-      CardSearch(testDate, Some(1), "query", List("doc1"))
+      CardSearch(testDate, Some(1), List(("key", "value")), List("doc1"))
 
     val session = Session(
       "test.txt",

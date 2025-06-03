@@ -23,7 +23,7 @@ object DateTimeParser {
         date
       }
       .orElse {
-        context.addWarning("DateTimeParser.process", "date")
+        context.addEmptyFieldWarning("DateTimeParser.process", "date")
         None
       }
   }

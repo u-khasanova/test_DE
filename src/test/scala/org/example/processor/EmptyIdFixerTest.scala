@@ -1,4 +1,4 @@
-package org.example.processors
+package org.example.processor
 
 import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
 import org.example.processor.fixers.EmptyIdFixer
@@ -48,7 +48,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
     "recover DocOpen ids from unique QuickSearch and CardSearch references"
   ) {
     val qs = QuickSearch(testDate, Some(123), "query", List("doc1", "doc2"))
-    val cs = CardSearch(testDate, Some(456), "query", List("doc3"))
+    val cs = CardSearch(testDate, Some(456), List(("key", "value")), List("doc3"))
     val docOpen1 = DocOpen(testDate, None, Some("doc1"))
     val docOpen2 = DocOpen(testDate, None, Some("doc2"))
     val docOpen3 = DocOpen(testDate, None, Some("doc3"))
@@ -100,7 +100,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
   test("don't recover ambiguous DocOpen ids test 2") {
     val qs = QuickSearch(testDate, Some(123), "query1", List("doc1"))
     val cs =
-      CardSearch(testDate, Some(456), "query2", List("doc1")) // Same docId
+      CardSearch(testDate, Some(456), List(("key", "value")), List("doc1")) // Same docId
     val docOpen =
       DocOpen(testDate, None, Some("doc1")) // Should NOT be recovered
 
@@ -148,7 +148,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
       CardSearch(
         testDate,
         None,
-        "query",
+        List(("key", "value")),
         List("doc2")
       )
 
@@ -178,7 +178,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
       CardSearch(
         testDate,
         None,
-        "query",
+        List(("key", "value")),
         List("doc2")
       )
 
@@ -215,7 +215,7 @@ class EmptyIdFixerTest extends AnyFunSuite with Matchers {
 
   test("don't recover ids when no matches found") {
     val qs = QuickSearch(testDate, Some(123), "query", List("doc1"))
-    val cs = CardSearch(testDate, Some(456), "query", List("doc2"))
+    val cs = CardSearch(testDate, Some(456), List(("key", "value")), List("doc2"))
     val docOpen = DocOpen(testDate, None, Some("doc3"))
 
     val session = Session(

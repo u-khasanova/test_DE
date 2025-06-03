@@ -1,7 +1,7 @@
 package org.example.processor.events
 
+import org.example.processor.DateTimeParser
 import org.example.processor.utils.ParseContext
-import org.example.processor.{DateTimeParser, SessionBuilder}
 
 import java.time.LocalDateTime
 
@@ -16,47 +16,47 @@ case class Session(
 
 object Session {
 
-  def parse(context: ParseContext): ParseContext = {
-    try {
-      while (context.iterator.hasNext) {
+  def parse(context: ParseContext): Session = {
+    while (context.iterator.hasNext) {
 
-        val lineStart = context.iterator.head
-          .split(" ")(0)
+      val lineStart = context.iterator.head
+        .split(" ")(0)
 
+      try {
         lineStart match {
 
-          case _ if lineStart == "SESSION_START" =>
-            if (context.currentSession.endDate.nonEmpty) {
-              context.currentSession = SessionBuilder(context.filePath)
-            }
-            context.currentSession.startDate = parseDateTime(context)
+          case "SESSION_START" =>
+            parseDateTime(context, "start")
 
-          case _ if lineStart == "QS" =>
+          case "QS" =>
             QuickSearch.parse(context)
 
-          case _ if lineStart == "CARD_SEARCH_START" =>
+          case "CARD_SEARCH_START" =>
             CardSearch.parse(context)
 
-          case _ if lineStart == "DOC_OPEN" =>
+          case "DOC_OPEN" =>
             DocOpen.parse(context)
 
-          case _ if lineStart == "SESSION_END" =>
-            context.currentSession.endDate = parseDateTime(context)
-            checkTrailingLines(context)
+          case "SESSION_END" =>
+            parseDateTime(context, "end")
+            if (context.iterator.hasNext) {
+              context.addTrailingLineAfterSessionEndWarning()
+            }
 
           case _ => if (context.iterator.hasNext) context.iterator.next()
         }
+      } catch {
+        case e: Exception =>
+          context.addError(e)
       }
-    } catch {
-      case e: Exception =>
-        context.addError(e)
     }
-    context
+    context.currentSession.build()
   }
 
   private def parseDateTime(
-      context: ParseContext
-  ): Option[LocalDateTime] = {
+      context: ParseContext,
+      typeOfDate: String
+  ): Unit = {
 
     val line = context.iterator.next()
 
@@ -65,20 +65,12 @@ object Session {
       .lift(1)
       .getOrElse("")
 
-    DateTimeParser.process(context, datePart)
-  }
+    val date = DateTimeParser.process(context, datePart)
 
-  private def checkTrailingLines(context: ParseContext): Unit = {
-
-    while (
-      context.iterator.hasNext && !context.iterator.head.startsWith(
-        "SESSION_START"
-      )
-    ) {
-      println(
-        s"WARNING: Found non-session lines after SESSION_END in ${context.filePath}"
-      )
-      println(s"  Example: ${context.iterator.next()}")
+    if (typeOfDate == "start") {
+      context.currentSession.startDate = date
+    } else {
+      context.currentSession.endDate = date
     }
   }
 }

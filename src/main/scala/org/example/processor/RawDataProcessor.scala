@@ -15,7 +15,7 @@ object RawDataProcessor {
 
     val parsed = spark.sparkContext
       .wholeTextFiles(filePath)
-      .flatMap { case (filePath, content) =>
+      .map { case (filePath, content) =>
         val lines = content
           .split("\n")
           .iterator
@@ -24,12 +24,12 @@ object RawDataProcessor {
         val context = ParseContext(
           filePath = filePath,
           iterator = lines,
-          currentSession = SessionBuilder(filePath),
-          errorAccumulator = errorAccumulator
+          currentSession = SessionBuilder(filePath)
         )
 
-        Session.parse(context)
-        context.currentSession.build()
+        val session = Session.parse(context)
+        context.errors.foreach(errorAccumulator.add)
+        session
       }
     parsed
   }

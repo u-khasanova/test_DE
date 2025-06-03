@@ -17,7 +17,9 @@ object DocOpen {
       context: ParseContext
   ): Unit = {
     val content = context.iterator.next()
-    val parts = content.split("\\s+").tail
+    val parts = content
+      .split("\\s+")
+      .tail
 
     val date = DateTimeParser.process(context, parts(0))
 
@@ -26,11 +28,11 @@ object DocOpen {
         Try(parts(0).toInt.abs).toOption
       else Try(parts(1).toInt.abs).toOption
 
-    if (searchId.isEmpty) context.addWarning("DocOpen.parse", "searchId")
+    if (searchId.isEmpty) context.addEmptyFieldWarning("DocOpen.parse", "searchId")
 
     val docId = if (parts.last.matches("^[0-9].*")) None else Try(parts.last).toOption
 
-    if (docId.isEmpty) context.addWarning("DocOpen.parse", "docId")
+    if (docId.isEmpty) context.addEmptyFieldWarning("DocOpen.parse", "docId")
 
     context.currentSession.docOpens +=
       DocOpen(date, searchId, docId)

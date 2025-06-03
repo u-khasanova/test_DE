@@ -1,4 +1,4 @@
-package org.example.processors
+package org.example.processor
 
 import org.example.processor.events.{CardSearch, DocOpen, QuickSearch, Session}
 import org.example.processor.fixers.EmptyDateFixer
@@ -27,7 +27,7 @@ class EmptyDateFixerTest extends AnyFunSuite {
         QuickSearch(Some(testDate2), None, "query2", List.empty)
       ),
       List(
-        CardSearch(None, None, "card1", List.empty)
+        CardSearch(None, None, List(("key", "value")), List.empty)
       ),
       List(
         DocOpen(None, None, None),

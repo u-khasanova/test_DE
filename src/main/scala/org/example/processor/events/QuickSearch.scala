@@ -28,25 +28,24 @@ object QuickSearch {
 
     val nextLine = context.iterator
       .next()
+      .trim
       .split("\\s+")
 
     val date = DateTimeParser.process(context, line(0))
 
-    val queryRaw =
+    val rawQuery =
       if (line.tail(0).startsWith("{")) line.tail.mkString(" ")
       else line.mkString(" ")
 
-    val query = queryRaw.substring(1, queryRaw.length - 1)
+    val query = rawQuery.substring(1, rawQuery.length - 1)
 
-    if (query.isEmpty) context.addWarning("QuickSearch.parse", "query")
+    if (query.isEmpty) context.addEmptyFieldWarning("QuickSearch.parse", "query")
 
     val searchId = Try(nextLine(0).toInt.abs).toOption
 
-    if (searchId.isEmpty) context.addWarning("QuickSearch.parse", "searchId")
+    if (searchId.isEmpty) context.addEmptyFieldWarning("QuickSearch.parse", "searchId")
 
     val docIds = if (searchId.isEmpty) nextLine.toList else nextLine.tail.toList
-
-    if (docIds.isEmpty) context.addWarning("QuickSearch.parse", "docIds")
 
     context.currentSession.quickSearches += QuickSearch(
       date,

@@ -51,15 +51,11 @@ object CardSearch {
         .toList
     }
 
-    if (query.isEmpty) context.addWarning("CardSearch.parse", "query")
-
     val searchId = Try(afterEnd.head.toInt.abs).toOption
 
-    if (searchId.isEmpty) context.addWarning("CardSearch.parse", "searchId")
+    if (searchId.isEmpty) context.addEmptyFieldWarning("CardSearch.parse", "searchId")
 
     val docIds = if (searchId.isEmpty) afterEnd.toList else afterEnd.tail.toList
-
-    if (docIds.isEmpty) context.addWarning("CardSearch.parse", "docIds")
 
     context.currentSession.cardSearches += CardSearch(
       date,

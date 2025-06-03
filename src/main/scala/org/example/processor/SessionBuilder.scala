@@ -14,16 +14,16 @@ case class SessionBuilder(
     cardSearches: mutable.ListBuffer[CardSearch] = mutable.ListBuffer.empty,
     docOpens: mutable.ListBuffer[DocOpen] = mutable.ListBuffer.empty
 ) {
-  def build(): Option[Session] = {
-    Some(
-      Session(
-        file,
-        startDate,
-        endDate,
-        quickSearches.toList,
-        cardSearches.toList,
-        docOpens.toList
-      )
-    ).map(DocOpenMapper.mapDocOpens)
+  def build(): Session = {
+    val session = Session(
+      file,
+      startDate,
+      endDate,
+      quickSearches.toList,
+      cardSearches.toList,
+      docOpens.toList
+    )
+
+    DocOpenMapper.mapDocOpens(session) // можно возвращать просто Session
   }
 }
